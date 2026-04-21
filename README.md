@@ -73,7 +73,17 @@ Open http://localhost:3100, tap the mic, speak, tap again to stop. The recipient
 
 ## Embedding the widget
 
-The backend serves `widget/voice-to-us.js` at `GET /widget.js`. Any website — Wordpress, plain HTML, Webflow, Next/Vue/whatever — can drop the mic button in with a few lines. The widget uses Shadow DOM so it inherits no host styles and leaks none.
+The widget is published via jsDelivr from this repo's tagged releases, so any site can embed it with just a `<script>` tag — no backend static hosting needed for the JS itself. The widget uses Shadow DOM so it inherits no host styles and leaks none.
+
+**Widget URL (pin to a tag):**
+
+```
+https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js
+```
+
+> Always pin a specific tag (`@v0.1.0`), never `@main` or `@latest` — jsDelivr caches branches for up to 7 days and you'll hit stale copies. To publish a new version, bump the tag (see [Releasing](#releasing-a-new-widget-version)).
+
+You still need a backend on a public HTTPS URL to receive the audio. The backend also serves `widget/voice-to-us.js` locally at `GET /widget.js` — useful during dev (`http://localhost:4000/widget.js`) if you don't want to commit-and-tag for every change.
 
 Before going cross-origin, set `FRONTEND_ORIGIN` in `backend/.env` to either `*` (allow any origin) or a comma-separated list of the sites that will embed it:
 
@@ -85,7 +95,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://your-backend.example.com/widget.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
   data-backend="https://your-backend.example.com"
   data-mount="#voice-btn"
   async
@@ -97,7 +107,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://your-backend.example.com/widget.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
   data-backend="https://your-backend.example.com"
   data-floating="true"
   async
@@ -107,7 +117,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 **Option C — programmatic**, for SPAs that render asynchronously:
 
 ```html
-<script src="https://your-backend.example.com/widget.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   const instance = VoiceToUs.mount('#voice-btn', {
@@ -142,8 +152,8 @@ Via data attributes (auto-mount):
 
 ```html
 <script
-  src="https://your-backend/widget.js"
-  data-backend="https://your-backend"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  data-backend="https://your-backend.example.com"
   data-mount="#voice-btn"
   data-color="#e91e63"
   data-ring-pulse-color="#f48fb1"
@@ -156,11 +166,11 @@ Via data attributes (auto-mount):
 Via JS:
 
 ```html
-<script src="https://your-backend/widget.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   VoiceToUs.mount('#voice-btn', {
-    backend: 'https://your-backend',
+    backend: 'https://your-backend.example.com',
     theme: {
       color: '#1976d2',
       ringPulseColor: '#64b5f6',
@@ -170,6 +180,19 @@ Via JS:
   });
 </script>
 ```
+
+### Releasing a new widget version
+
+```bash
+# after editing widget/voice-to-us.js
+git add widget/voice-to-us.js
+git commit -m "widget: <what changed>"
+git push origin main
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+The new file is live at `https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js` within seconds. Existing embeds on `@v0.1.0` keep serving the old file immutably — update embedders' script tags to roll them forward.
 
 ## Notes
 
