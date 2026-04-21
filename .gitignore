@@ -1,0 +1,15 @@
+# belt-and-suspenders — every .env variant anywhere in the tree stays local
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+node_modules/
+**/node_modules/
+*.log
+.DS_Store
+
+# build output
+**/.next/
+**/out/
+**/dist/
