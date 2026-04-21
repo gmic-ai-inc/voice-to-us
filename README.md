@@ -96,7 +96,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 ```html
 <script
   src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
-  data-backend="https://your-backend.example.com"
+  data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   async
 ></script>
@@ -108,7 +108,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 ```html
 <script
   src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
-  data-backend="https://your-backend.example.com"
+  data-backend="https://gmic.ai/voice2us"
   data-floating="true"
   async
 ></script>
@@ -121,13 +121,13 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 <div id="voice-btn"></div>
 <script>
   const instance = VoiceToUs.mount('#voice-btn', {
-    backend: 'https://your-backend.example.com',
+    backend: 'https://gmic.ai/voice2us',
   });
   // later: instance.destroy();
 </script>
 ```
 
-A live demo is served at `http://localhost:4000/widget-demo` while the backend is running.
+A live demo is hosted at **<https://gmic.ai/voice2us/widget-demo>** (or `http://localhost:4000/widget-demo` when running the backend locally).
 
 ### Customizing the look
 
@@ -153,7 +153,7 @@ Via data attributes (auto-mount):
 ```html
 <script
   src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
-  data-backend="https://your-backend.example.com"
+  data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   data-color="#e91e63"
   data-ring-pulse-color="#f48fb1"
@@ -170,7 +170,7 @@ Via JS:
 <div id="voice-btn"></div>
 <script>
   VoiceToUs.mount('#voice-btn', {
-    backend: 'https://your-backend.example.com',
+    backend: 'https://gmic.ai/voice2us',
     theme: {
       color: '#1976d2',
       ringPulseColor: '#64b5f6',

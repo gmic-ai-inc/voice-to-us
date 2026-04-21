@@ -41,8 +41,8 @@
 
     <h2>1. Inline — auto-mount</h2>
     <pre><code>&lt;script
-  src="http://localhost:4000/widget.js"
-  data-backend="http://localhost:4000"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"&gt;&lt;/script&gt;
 &lt;div id="voice-btn"&gt;&lt;/div&gt;</code></pre>
     <div class="inline-mount">
@@ -50,10 +50,10 @@
     </div>
 
     <h2>2. Programmatic</h2>
-    <pre><code>&lt;script src="http://localhost:4000/widget.js"&gt;&lt;/script&gt;
+    <pre><code>&lt;script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"&gt;&lt;/script&gt;
 &lt;div id="voice-btn-2"&gt;&lt;/div&gt;
 &lt;script&gt;
-  VoiceToUs.mount('#voice-btn-2', { backend: 'http://localhost:4000' });
+  VoiceToUs.mount('#voice-btn-2', { backend: 'https://gmic.ai/voice2us' });
 &lt;/script&gt;</code></pre>
     <div class="inline-mount">
       <div id="voice-btn-2"></div>
@@ -61,8 +61,8 @@
 
     <h2>3. Floating bubble (bottom-right)</h2>
     <pre><code>&lt;script
-  src="http://localhost:4000/widget.js"
-  data-backend="http://localhost:4000"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  data-backend="https://gmic.ai/voice2us"
   data-floating="true"&gt;&lt;/script&gt;</code></pre>
     <p>(Toggle the checkbox to try it without reloading.)</p>
     <label>
@@ -72,8 +72,8 @@
     <h2>4. Custom styling</h2>
     <p>Override colors, size, and labels via <code>data-*</code> attributes or the <code>theme</code> / <code>labels</code> options.</p>
     <pre><code>&lt;script
-  src="http://localhost:4000/widget.js"
-  data-backend="http://localhost:4000"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn-pink"
   data-color="#e91e63"
   data-ring-pulse-color="#f48fb1"
@@ -89,9 +89,11 @@
     </p>
 
     <!-- load the widget once; use programmatic mounts below -->
-    <script src="/widget.js"></script>
+    <script src="widget.js"></script>
     <script>
-      var BACKEND = 'http://localhost:4000';
+      // Derive the backend URL from this page's own location so the demo works
+      // at both http://localhost:4000/widget-demo and https://gmic.ai/voice2us/widget-demo
+      var BACKEND = new URL('.', location.href).href.replace(/\/$/, '');
       VoiceToUs.mount('#voice-btn', { backend: BACKEND });
       VoiceToUs.mount('#voice-btn-2', { backend: BACKEND });
 
