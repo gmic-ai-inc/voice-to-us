@@ -78,7 +78,7 @@ The widget is published via jsDelivr from this repo's tagged releases, so any si
 **Widget URL (pin to a tag):**
 
 ```
-https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js
+https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js
 ```
 
 > Always pin a specific tag (`@v0.1.0`), never `@main` or `@latest` — jsDelivr caches branches for up to 7 days and you'll hit stale copies. To publish a new version, bump the tag (see [Releasing](#releasing-a-new-widget-version)).
@@ -95,7 +95,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   async
@@ -103,21 +103,24 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 <div id="voice-btn"></div>
 ```
 
-**Option B — floating bubble in the corner** (no mount point needed):
+**Option B — floating bubble** (no mount point needed):
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-floating="true"
+  data-placement="bottom-center"
   async
 ></script>
 ```
 
+`data-placement` accepts `bottom-right` (default), `bottom-center`, or `bottom-left`.
+
 **Option C — programmatic**, for SPAs that render asynchronously:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   const instance = VoiceToUs.mount('#voice-btn', {
@@ -142,6 +145,7 @@ All colors, the button size, and the label text are configurable.
 | `theme.ringPulseColor` | `data-ring-pulse-color` | `#bdbdbd` | animated ring while recording |
 | `theme.errorColor` | `data-error-color` | `#c0392b` | label color on error |
 | `theme.size` | `data-size` | `72` | button diameter in px (icon scales) |
+| `placement` | `data-placement` | `bottom-right` | floating-mode only: `bottom-right` / `bottom-center` / `bottom-left` |
 | `labels.idle` | `data-label-idle` | `Tap to record` | |
 | `labels.recording` | `data-label-recording` | `Recording… tap to stop` | |
 | `labels.uploading` | `data-label-uploading` | `Sending…` | |
@@ -152,7 +156,7 @@ Via data attributes (auto-mount):
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   data-color="#e91e63"
@@ -166,7 +170,7 @@ Via data attributes (auto-mount):
 Via JS:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   VoiceToUs.mount('#voice-btn', {

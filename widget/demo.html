@@ -59,15 +59,21 @@
       <div id="voice-btn-2"></div>
     </div>
 
-    <h2>3. Floating bubble (bottom-right)</h2>
+    <h2>3. Floating bubble</h2>
     <pre><code>&lt;script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.0/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
-  data-floating="true"&gt;&lt;/script&gt;</code></pre>
-    <p>(Toggle the checkbox to try it without reloading.)</p>
-    <label>
-      <input type="checkbox" id="toggle-float" /> Show floating bubble
-    </label>
+  data-floating="true"
+  data-placement="bottom-center"&gt;&lt;/script&gt;</code></pre>
+    <p><code>data-placement</code> accepts <code>bottom-right</code> (default), <code>bottom-center</code>, or <code>bottom-left</code>. Try it live:</p>
+    <p style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+      <label><input type="checkbox" id="toggle-float" /> Show floating bubble</label>
+      <select id="placement-select" style="padding:.25rem .5rem">
+        <option value="bottom-right">bottom-right</option>
+        <option value="bottom-center" selected>bottom-center</option>
+        <option value="bottom-left">bottom-left</option>
+      </select>
+    </p>
 
     <h2>4. Custom styling</h2>
     <p>Override colors, size, and labels via <code>data-*</code> attributes or the <code>theme</code> / <code>labels</code> options.</p>
@@ -133,17 +139,30 @@
       });
 
       var floatingInstance = null;
-      document.getElementById('toggle-float').addEventListener('change', function (e) {
-        if (e.target.checked) {
-          floatingInstance = VoiceToUs.mount(document.body, {
-            backend: BACKEND,
-            floating: true,
-            theme: { color: '#e91e63', ringPulseColor: '#f48fb1' },
-          });
-        } else if (floatingInstance) {
+      var placementSelect = document.getElementById('placement-select');
+      var floatToggle = document.getElementById('toggle-float');
+
+      function mountFloating() {
+        if (floatingInstance) floatingInstance.destroy();
+        floatingInstance = VoiceToUs.mount(document.body, {
+          backend: BACKEND,
+          floating: true,
+          placement: placementSelect.value,
+          theme: { color: '#e91e63', ringPulseColor: '#f48fb1' },
+        });
+      }
+      function unmountFloating() {
+        if (floatingInstance) {
           floatingInstance.destroy();
           floatingInstance = null;
         }
+      }
+      floatToggle.addEventListener('change', function (e) {
+        if (e.target.checked) mountFloating();
+        else unmountFloating();
+      });
+      placementSelect.addEventListener('change', function () {
+        if (floatToggle.checked) mountFloating();
       });
     </script>
   </body>

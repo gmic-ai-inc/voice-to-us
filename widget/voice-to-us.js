@@ -29,6 +29,17 @@
     error: 'Error',
   };
 
+  var PLACEMENT_CSS = {
+    'bottom-right':  'right:24px;bottom:24px;',
+    'bottom-left':   'left:24px;bottom:24px;',
+    'bottom-center': 'left:50%;bottom:24px;transform:translateX(-50%);',
+  };
+
+  function normalizePlacement(p) {
+    p = (p || 'bottom-right').toString().toLowerCase().trim();
+    return PLACEMENT_CSS[p] ? p : 'bottom-right';
+  }
+
   var DEFAULT_THEME = {
     color: '#111111',           /* button background */
     textColor: '#ffffff',       /* mic / stop icon colour */
@@ -53,7 +64,10 @@
     '.icon{display:flex;align-items:center;justify-content:center;width:calc(var(--v2u-size) * 0.4);height:calc(var(--v2u-size) * 0.4);line-height:0}',
     '.icon svg{width:100%;height:100%;display:block}',
     /* floating mode: tighter layout, no idle outer ring, smaller defaults */
-    '.wrap.floating{gap:.4rem;flex-direction:column-reverse;align-items:flex-end}',
+    '.wrap.floating{gap:.4rem;flex-direction:column-reverse}',
+    '.wrap.floating.place-right{align-items:flex-end}',
+    '.wrap.floating.place-left{align-items:flex-start}',
+    '.wrap.floating.place-center{align-items:center}',
     '.wrap.floating .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}',
     '.wrap.floating .ring:not(.pulse){display:none}',
     '.wrap.floating .ring.pulse{inset:calc(var(--v2u-size) * -0.14)}',
@@ -83,6 +97,7 @@
     if (!hostEl) throw new Error('VoiceToUs.mount: target not found: ' + target);
 
     var isFloating = !!options.floating;
+    var placement = normalizePlacement(options.placement);
     var userTheme = options.theme || {};
     if (isFloating && userTheme.size == null) {
       userTheme = mergeDefaults(userTheme, { size: 56 });
@@ -94,7 +109,8 @@
     if (isFloating) {
       root = document.createElement('div');
       root.style.cssText =
-        'position:fixed;right:24px;bottom:24px;z-index:2147483647;margin:0;padding:0;';
+        'position:fixed;z-index:2147483647;margin:0;padding:0;' +
+        PLACEMENT_CSS[placement];
       document.body.appendChild(root);
     }
 
@@ -106,7 +122,11 @@
     shadow.appendChild(style);
 
     var wrap = document.createElement('div');
-    wrap.className = 'wrap' + (isFloating ? ' floating' : '');
+    wrap.className =
+      'wrap' +
+      (isFloating
+        ? ' floating place-' + placement.replace('bottom-', '')
+        : '');
 
     var labelEl = document.createElement('div');
     labelEl.className = 'label';
@@ -334,12 +354,14 @@
     if (!backend) return;
     var floating = script.getAttribute('data-floating') === 'true';
     var mountSel = script.getAttribute('data-mount');
+    var placement = script.getAttribute('data-placement');
     var theme = readThemeFromScript(script);
     var labels = readLabelsFromScript(script);
 
     var run = function () {
       try {
         var opts = { backend: backend, theme: theme, labels: labels };
+        if (placement) opts.placement = placement;
         if (floating) {
           opts.floating = true;
           mount(document.body, opts);
@@ -357,6 +379,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.2.0' };
+  window.VoiceToUs = { mount: mount, version: '0.1.1' };
   autoInit();
 })();
