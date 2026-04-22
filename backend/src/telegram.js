@@ -5,23 +5,74 @@ import path from 'node:path';
 import os from 'node:os';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 
-export async function sendVoiceToTelegram({ buffer, mimeType, chatId, botToken }) {
-  if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is not configured');
-  if (!chatId) throw new Error('TELEGRAM_CHAT_ID is not configured');
+export function getTargets() {
+  const targets = [];
+  if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+    targets.push({
+      label: 'primary',
+      token: process.env.TELEGRAM_BOT_TOKEN,
+      chatId: process.env.TELEGRAM_CHAT_ID,
+    });
+  }
+  for (let i = 2; i <= 20; i++) {
+    const token = process.env[`TELEGRAM_BOT_TOKEN_${i}`];
+    const chatId = process.env[`TELEGRAM_CHAT_ID_${i}`];
+    if (token && chatId) {
+      targets.push({ label: `#${i}`, token, chatId });
+    }
+  }
+  return targets;
+}
+
+export async function sendVoiceToAllTargets({ buffer, mimeType }) {
+  const targets = getTargets();
+  if (targets.length === 0) {
+    throw new Error(
+      'No Telegram targets configured. Set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in .env.',
+    );
+  }
 
   const oggBuffer = await transcodeToOggOpus(buffer, mimeType);
 
+  const results = await Promise.allSettled(
+    targets.map((t) => sendOggToOne(oggBuffer, t)),
+  );
+
+  const sent = [];
+  const failed = [];
+  results.forEach((r, i) => {
+    const t = targets[i];
+    if (r.status === 'fulfilled') {
+      sent.push({ label: t.label, chatId: t.chatId, messageId: r.value.message_id });
+    } else {
+      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
+      failed.push({ label: t.label, chatId: t.chatId, error: msg });
+    }
+  });
+
+  if (failed.length > 0) {
+    console.warn('[telegram] partial or total failure:', failed);
+  }
+  if (sent.length === 0) {
+    const summary = failed.map((f) => `${f.label}: ${f.error}`).join(' | ');
+    throw new Error(`All ${targets.length} Telegram target(s) failed. ${summary}`);
+  }
+
+  return { sent, failed };
+}
+
+async function sendOggToOne(oggBuffer, { token, chatId }) {
   const form = new FormData();
   form.append('chat_id', String(chatId));
   form.append('voice', new Blob([oggBuffer], { type: 'audio/ogg' }), 'voice.ogg');
 
-  const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+  const resp = await fetch(`https://api.telegram.org/bot${token}/sendVoice`, {
     method: 'POST',
     body: form,
   });
   const data = await resp.json();
   if (!data.ok) {
-    throw new Error(`Telegram API error: ${data.description ?? 'unknown'}`);
+    throw new Error(`Telegram API: ${data.description ?? 'unknown error'}`);
   }
   return data.result;
 }

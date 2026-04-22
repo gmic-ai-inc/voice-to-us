@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { sendVoiceToTelegram } from './telegram.js';
+import { sendVoiceToAllTargets, getTargets } from './telegram.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const widgetDir = path.resolve(__dirname, '../../widget');
@@ -44,13 +44,15 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
   }
 
   try {
-    const result = await sendVoiceToTelegram({
+    const result = await sendVoiceToAllTargets({
       buffer: req.file.buffer,
       mimeType: req.file.mimetype,
-      chatId: process.env.TELEGRAM_CHAT_ID,
-      botToken: process.env.TELEGRAM_BOT_TOKEN,
     });
-    res.json({ ok: true, messageId: result.message_id });
+    res.json({
+      ok: true,
+      delivered: result.sent.length,
+      failed: result.failed.length,
+    });
   } catch (err) {
     console.error('[upload] failed:', err);
     const message = err instanceof Error ? err.message : 'Send failed';
@@ -60,5 +62,13 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 
 const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => {
+  const targets = getTargets();
   console.log(`voice-to-us backend listening on http://localhost:${port}`);
+  if (targets.length === 0) {
+    console.warn('WARNING: no Telegram targets configured — uploads will fail.');
+  } else {
+    console.log(
+      `Telegram fan-out: ${targets.length} target(s) — ${targets.map((t) => `${t.label}:${t.chatId}`).join(', ')}`,
+    );
+  }
 });

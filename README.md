@@ -39,6 +39,22 @@ A Telegram bot can only DM a user **after that user has messaged the bot first**
 
 > If `getUpdates` is empty, have the user send the bot another message and refresh.
 
+## 2.1 · (Optional) Multiple recipients
+
+Every voice upload is fanned out to N Telegram recipients in parallel. To add more, set numbered variables alongside the primary pair. **Each additional recipient needs its own bot** (since a Telegram bot can only DM users who have started a chat with it):
+
+```
+# primary
+TELEGRAM_BOT_TOKEN=8123...
+TELEGRAM_CHAT_ID=111111111
+
+# second recipient (e.g. the boss)
+TELEGRAM_BOT_TOKEN_2=9456...
+TELEGRAM_CHAT_ID_2=222222222
+```
+
+Supports `_2` through `_20`. Incomplete pairs (token without chat_id or vice versa) are silently skipped. If all recipients fail, the upload returns 500; if at least one succeeds, it returns 200 and logs the failures server-side.
+
 ## 3 · Configure environment variables
 
 ```bash
