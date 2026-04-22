@@ -47,6 +47,10 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     const result = await sendVoiceToAllTargets({
       buffer: req.file.buffer,
       mimeType: req.file.mimetype,
+      context: {
+        pageTitle: req.body?.pageTitle,
+        pageUrl: req.body?.pageUrl,
+      },
     });
     res.json({
       ok: true,

@@ -203,6 +203,10 @@
             ? 'ogg'
             : 'bin';
       form.append('audio', blob, 'recording.' + ext);
+      try {
+        form.append('pageTitle', (document.title || '').slice(0, 300));
+        form.append('pageUrl', (location.href || '').slice(0, 800));
+      } catch (_) { /* sandboxed iframe: ignore */ }
 
       fetch(backend + '/api/upload', { method: 'POST', body: form })
         .then(function (resp) {
@@ -379,6 +383,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.1' };
+  window.VoiceToUs = { mount: mount, version: '0.1.2' };
   autoInit();
 })();

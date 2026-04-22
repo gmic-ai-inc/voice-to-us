@@ -24,7 +24,7 @@ export function getTargets() {
   return targets;
 }
 
-export async function sendVoiceToAllTargets({ buffer, mimeType }) {
+export async function sendVoiceToAllTargets({ buffer, mimeType, context = {} }) {
   const targets = getTargets();
   if (targets.length === 0) {
     throw new Error(
@@ -33,9 +33,10 @@ export async function sendVoiceToAllTargets({ buffer, mimeType }) {
   }
 
   const oggBuffer = await transcodeToOggOpus(buffer, mimeType);
+  const caption = buildCaption(context);
 
   const results = await Promise.allSettled(
-    targets.map((t) => sendOggToOne(oggBuffer, t)),
+    targets.map((t) => sendOggToOne(oggBuffer, t, caption)),
   );
 
   const sent = [];
@@ -61,10 +62,14 @@ export async function sendVoiceToAllTargets({ buffer, mimeType }) {
   return { sent, failed };
 }
 
-async function sendOggToOne(oggBuffer, { token, chatId }) {
+async function sendOggToOne(oggBuffer, { token, chatId }, caption) {
   const form = new FormData();
   form.append('chat_id', String(chatId));
   form.append('voice', new Blob([oggBuffer], { type: 'audio/ogg' }), 'voice.ogg');
+  if (caption) {
+    form.append('caption', caption);
+    form.append('parse_mode', 'HTML');
+  }
 
   const resp = await fetch(`https://api.telegram.org/bot${token}/sendVoice`, {
     method: 'POST',
@@ -75,6 +80,30 @@ async function sendOggToOne(oggBuffer, { token, chatId }) {
     throw new Error(`Telegram API: ${data.description ?? 'unknown error'}`);
   }
   return data.result;
+}
+
+function buildCaption({ pageTitle, pageUrl } = {}) {
+  const title = truncate(String(pageTitle ?? '').trim(), 200);
+  const url = truncate(String(pageUrl ?? '').trim(), 500);
+  const ts =
+    new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+
+  const lines = [];
+  lines.push(`<b>${escapeHtml(title || '(no page title)')}</b>`);
+  if (url) lines.push(escapeHtml(url));
+  lines.push(ts);
+  return lines.join('\n');
+}
+
+function truncate(s, max) {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 async function transcodeToOggOpus(input, mimeType) {

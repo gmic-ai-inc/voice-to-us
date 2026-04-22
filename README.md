@@ -87,6 +87,19 @@ npm run dev
 
 Open http://localhost:3100, tap the mic, speak, tap again to stop. The recipient should receive a voice bubble in Telegram within a second or two.
 
+## Message format
+
+Each uploaded voice is delivered as a Telegram voice bubble with an HTML caption containing context about where the recording came from:
+
+```
+[▶ Voice 0:07]
+Contact Us — GMIC AI
+https://gmic.ai/contact
+2026-04-22 14:32 UTC
+```
+
+The page title and URL are sent by the widget (reading `document.title` and `location.href` at record time) and HTML-escaped server-side. Requires widget `v0.1.2` or later; older widgets still work and just show `(no page title)` + timestamp.
+
 ## Embedding the widget
 
 The widget is published via jsDelivr from this repo's tagged releases, so any site can embed it with just a `<script>` tag — no backend static hosting needed for the JS itself. The widget uses Shadow DOM so it inherits no host styles and leaks none.
@@ -94,7 +107,7 @@ The widget is published via jsDelivr from this repo's tagged releases, so any si
 **Widget URL (pin to a tag):**
 
 ```
-https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js
+https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js
 ```
 
 > Always pin a specific tag (`@v0.1.0`), never `@main` or `@latest` — jsDelivr caches branches for up to 7 days and you'll hit stale copies. To publish a new version, bump the tag (see [Releasing](#releasing-a-new-widget-version)).
@@ -111,7 +124,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   async
@@ -123,7 +136,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-floating="true"
   data-placement="bottom-center"
@@ -136,7 +149,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 **Option C — programmatic**, for SPAs that render asynchronously:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   const instance = VoiceToUs.mount('#voice-btn', {
@@ -172,7 +185,7 @@ Via data attributes (auto-mount):
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   data-color="#e91e63"
@@ -186,7 +199,7 @@ Via data attributes (auto-mount):
 Via JS:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   VoiceToUs.mount('#voice-btn', {
@@ -212,7 +225,7 @@ git tag v0.1.1
 git push origin v0.1.1
 ```
 
-The new file is live at `https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.1/widget/voice-to-us.js` within seconds. Existing embeds on `@v0.1.0` keep serving the old file immutably — update embedders' script tags to roll them forward.
+The new file is live at `https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js` within seconds. Existing embeds on `@v0.1.0` keep serving the old file immutably — update embedders' script tags to roll them forward.
 
 ## Notes
 
