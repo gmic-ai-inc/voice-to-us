@@ -533,16 +533,16 @@
             <pre><code><span class="hl-tag">&lt;script</span>
   <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span>
   <span class="hl-attr">data-backend</span>=<span class="hl-str">"https://gmic.ai/voice2us"</span>
-  <span class="hl-attr">data-mount</span>=<span class="hl-str">"#voice-btn-cn"</span>
-  <span class="hl-attr">data-label-idle</span>=<span class="hl-str">"按住说话"</span>
-  <span class="hl-attr">data-label-recording</span>=<span class="hl-str">"录音中… 再点一次结束"</span>
-  <span class="hl-attr">data-label-uploading</span>=<span class="hl-str">"发送中…"</span>
-  <span class="hl-attr">data-label-sent</span>=<span class="hl-str">"已送达"</span>
-  <span class="hl-attr">data-label-error</span>=<span class="hl-str">"出错了"</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
+  <span class="hl-attr">data-mount</span>=<span class="hl-str">"#voice-btn-labels"</span>
+  <span class="hl-attr">data-label-idle</span>=<span class="hl-str">"Leave us a voice note"</span>
+  <span class="hl-attr">data-label-recording</span>=<span class="hl-str">"Listening… tap to finish"</span>
+  <span class="hl-attr">data-label-uploading</span>=<span class="hl-str">"Delivering…"</span>
+  <span class="hl-attr">data-label-sent</span>=<span class="hl-str">"Thanks — got it!"</span>
+  <span class="hl-attr">data-label-error</span>=<span class="hl-str">"Something went wrong"</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
           </div>
           <div class="card__preview">
-            <small>中文示例</small>
-            <div id="voice-btn-cn"></div>
+            <small>CUSTOM LABELS</small>
+            <div id="voice-btn-labels"></div>
             <small style="color:var(--muted); text-transform:none; letter-spacing:0">
               Tap through — labels change for every state.
             </small>
@@ -608,14 +608,14 @@
         labels: { idle: 'Hold to speak' },
       });
 
-      VoiceToUs.mount('#voice-btn-cn', {
+      VoiceToUs.mount('#voice-btn-labels', {
         backend: BACKEND,
         labels: {
-          idle: '按住说话',
-          recording: '录音中… 再点一次结束',
-          uploading: '发送中…',
-          sent: '已送达',
-          error: '出错了',
+          idle: 'Leave us a voice note',
+          recording: 'Listening… tap to finish',
+          uploading: 'Delivering…',
+          sent: 'Thanks — got it!',
+          error: 'Something went wrong',
         },
       });
 
