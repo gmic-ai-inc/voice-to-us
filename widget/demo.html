@@ -94,6 +94,24 @@
       Three instances above use pink / blue / minimal themes. See the page source.
     </p>
 
+    <h2>5. Custom tip / status text (every state)</h2>
+    <p>All five status messages are overridable via <code>data-label-*</code> attributes or the <code>labels</code> option. Use this for localization or brand voice.</p>
+    <pre><code>&lt;script
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
+  data-backend="https://gmic.ai/voice2us"
+  data-mount="#voice-btn-cn"
+  data-label-idle="按住说话"
+  data-label-recording="录音中… 再点一次结束"
+  data-label-uploading="发送中…"
+  data-label-sent="已送达"
+  data-label-error="出错了"&gt;&lt;/script&gt;</code></pre>
+    <div class="inline-mount">
+      <div id="voice-btn-cn"></div>
+    </div>
+    <p style="font-size:.85rem;color:#666;text-align:center;margin-top:-0.5rem">
+      Try tapping above — the label cycles through all five custom states.
+    </p>
+
     <!-- load the widget once; use programmatic mounts below -->
     <script src="widget.js"></script>
     <script>
@@ -124,6 +142,17 @@
           size: 72,
         },
         labels: { idle: 'Ask a question', sent: 'Got it!' },
+      });
+
+      VoiceToUs.mount('#voice-btn-cn', {
+        backend: BACKEND,
+        labels: {
+          idle: '按住说话',
+          recording: '录音中… 再点一次结束',
+          uploading: '发送中…',
+          sent: '已送达',
+          error: '出错了',
+        },
       });
 
       VoiceToUs.mount('#voice-btn-mono', {
