@@ -3,121 +3,572 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>voice-to-us widget demo</title>
+    <title>Voice to Us — embeddable voice message widget</title>
+    <meta name="description" content="Drop a mic button into any website. Visitors record a voice note, it lands in your Telegram. Self-hosted, ~3 lines to embed." />
     <style>
+      :root {
+        --ink: #0b0d12;
+        --muted: #5f6573;
+        --faint: #b8bcc7;
+        --line: #e6e8ee;
+        --bg: #fafafb;
+        --card: #ffffff;
+        --accent: #6366f1;
+        --accent-2: #ec4899;
+        --code-bg: #0f1115;
+        --code-fg: #e4e7ef;
+        --code-comment: #6b7283;
+        --code-string: #a5d6a7;
+        --code-attr: #82aaff;
+        --code-tag: #f48fb1;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        max-width: 720px;
-        margin: 3rem auto;
-        padding: 0 1rem;
-        color: #111;
-        line-height: 1.5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
       }
-      h1 {
-        font-size: 1.5rem;
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      /* ---------- top nav ---------- */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .9rem 1.5rem;
+        background: rgba(255, 255, 255, .8);
+        backdrop-filter: saturate(180%) blur(12px);
+        -webkit-backdrop-filter: saturate(180%) blur(12px);
+        border-bottom: 1px solid var(--line);
       }
-      pre {
-        background: #f5f5f5;
-        padding: 1rem;
-        border-radius: 6px;
-        overflow-x: auto;
-        font-size: 0.85rem;
+      .nav__brand {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        font-weight: 600;
+        letter-spacing: -.01em;
+        color: var(--ink);
       }
-      .inline-mount {
+      .nav__brand:hover { text-decoration: none; }
+      .nav__dot {
+        width: 10px; height: 10px; border-radius: 9999px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, .12);
+      }
+      .nav__right { display: flex; align-items: center; gap: .75rem; }
+      .nav__badge {
+        font-size: .72rem;
+        padding: .15rem .5rem;
+        border-radius: 999px;
+        background: #eef0f5;
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+      .nav__link {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .45rem .85rem;
+        border-radius: 8px;
+        font-size: .88rem;
+        font-weight: 500;
+        color: var(--ink);
+        background: var(--ink);
+        color: #fff;
+        transition: transform .12s ease, box-shadow .12s ease;
+      }
+      .nav__link:hover {
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(11, 13, 18, .18);
+      }
+      .nav__link svg { width: 16px; height: 16px; }
+
+      /* ---------- hero ---------- */
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 5rem 1.5rem 4rem;
+        text-align: center;
+        border-bottom: 1px solid var(--line);
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(800px 320px at 50% -120px, rgba(99, 102, 241, .16), transparent 70%),
+          radial-gradient(600px 240px at 80% 10%, rgba(236, 72, 153, .12), transparent 70%),
+          radial-gradient(600px 240px at 20% 10%, rgba(99, 102, 241, .10), transparent 70%);
+        pointer-events: none;
+      }
+      .hero > * { position: relative; }
+      .hero__eyebrow {
+        display: inline-block;
+        font-size: .75rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1rem;
+        padding: .3rem .75rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .7);
+      }
+      .hero h1 {
+        font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+        line-height: 1.05;
+        letter-spacing: -.025em;
+        margin: 0 0 1rem;
+        font-weight: 700;
+      }
+      .hero h1 .grad {
+        background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+        -webkit-background-clip: text; background-clip: text;
+        color: transparent;
+      }
+      .hero__sub {
+        max-width: 620px;
+        margin: 0 auto 2rem;
+        font-size: 1.1rem;
+        color: var(--muted);
+      }
+      .hero__ctas {
         display: flex;
         justify-content: center;
-        padding: 2.5rem 0;
-        border: 1px dashed #ccc;
-        border-radius: 6px;
-        margin: 1.5rem 0;
+        gap: .75rem;
+        flex-wrap: wrap;
       }
+      .btn {
+        display: inline-flex; align-items: center; gap: .5rem;
+        padding: .7rem 1.15rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: .95rem;
+        transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+        border: 1px solid transparent;
+        cursor: pointer;
+      }
+      .btn--primary {
+        background: var(--ink);
+        color: #fff;
+      }
+      .btn--primary:hover {
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 26px rgba(11, 13, 18, .22);
+      }
+      .btn--ghost {
+        background: #fff;
+        color: var(--ink);
+        border-color: var(--line);
+      }
+      .btn--ghost:hover {
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(11, 13, 18, .08);
+      }
+
+      .hero__try {
+        margin-top: 3rem;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem 3rem;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid var(--line);
+        box-shadow: 0 20px 60px rgba(11, 13, 18, .06);
+      }
+      .hero__try small { color: var(--muted); font-size: .8rem; }
+
+      /* ---------- features row ---------- */
+      .features {
+        max-width: 960px;
+        margin: 3rem auto 0;
+        padding: 0 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+      .feature {
+        padding: 1.25rem;
+        border-radius: 14px;
+        background: var(--card);
+        border: 1px solid var(--line);
+      }
+      .feature__icon {
+        width: 36px; height: 36px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, .12), rgba(236, 72, 153, .12));
+        color: var(--accent);
+        margin-bottom: .6rem;
+      }
+      .feature h3 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; }
+      .feature p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+      /* ---------- sections ---------- */
+      main { max-width: 960px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+      section { margin-bottom: 3.5rem; scroll-margin-top: 5rem; }
+      section h2 {
+        font-size: 1.5rem;
+        letter-spacing: -.01em;
+        margin: 0 0 .25rem;
+        display: flex;
+        align-items: baseline;
+        gap: .75rem;
+      }
+      section h2 .num {
+        font-size: .8rem;
+        color: var(--faint);
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+      }
+      section > p { color: var(--muted); margin: 0 0 1.25rem; }
+
+      .card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 0;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .card__code {
+        position: relative;
+        background: var(--code-bg);
+        color: var(--code-fg);
+      }
+      .card__code pre {
+        margin: 0;
+        padding: 1.1rem 1.25rem;
+        font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+        font-size: .82rem;
+        line-height: 1.55;
+        overflow-x: auto;
+      }
+      .card__code .copy {
+        position: absolute;
+        top: .6rem; right: .6rem;
+        padding: .3rem .55rem;
+        font-size: .72rem;
+        border: 1px solid rgba(255,255,255,.15);
+        background: rgba(255,255,255,.05);
+        color: var(--code-fg);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background .12s;
+      }
+      .card__code .copy:hover { background: rgba(255,255,255,.12); }
+      .card__code .copy.done { background: rgba(100,200,130,.22); border-color: rgba(100,200,130,.4); }
+
+      .card__preview {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: .75rem;
+        padding: 1.75rem 1rem;
+        background: #f6f7fa;
+        border-left: 1px solid var(--line);
+        min-height: 220px;
+      }
+      .card__preview small {
+        font-size: .72rem;
+        color: var(--faint);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 760px) {
+        .card { grid-template-columns: 1fr; }
+        .card__preview { border-left: none; border-top: 1px solid var(--line); }
+      }
+
+      /* inline code in prose */
+      code {
+        font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+        font-size: .85em;
+        padding: .1rem .35rem;
+        background: #eef0f5;
+        border-radius: 4px;
+        color: var(--ink);
+      }
+
+      /* floating-mode controls */
+      .controls {
+        display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+        padding: .85rem 1rem;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        margin-top: 1rem;
+        font-size: .9rem;
+      }
+      .controls label { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; }
+      .controls select {
+        padding: .3rem .6rem;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font: inherit;
+      }
+
+      .theme-gallery {
+        display: flex; flex-wrap: wrap; gap: 2rem;
+        align-items: center; justify-content: center;
+      }
+
+      /* footer */
+      footer {
+        padding: 2.5rem 1.5rem 4rem;
+        text-align: center;
+        color: var(--muted);
+        font-size: .88rem;
+        border-top: 1px solid var(--line);
+      }
+      footer a { color: var(--muted); }
+      footer .dot { color: var(--faint); margin: 0 .5rem; }
+
+      /* simple syntax tinting for HTML code blocks */
+      .hl-tag { color: var(--code-tag); }
+      .hl-attr { color: var(--code-attr); }
+      .hl-str { color: var(--code-string); }
+      .hl-comment { color: var(--code-comment); font-style: italic; }
     </style>
   </head>
   <body>
-    <h1>voice-to-us widget</h1>
-    <p>
-      Three drop-in modes. Pick one, paste the snippet into any site, done.
-    </p>
+    <nav class="nav">
+      <a href="#top" class="nav__brand">
+        <span class="nav__dot" aria-hidden="true"></span>
+        voice-to-us
+      </a>
+      <div class="nav__right">
+        <span class="nav__badge">v0.1.2</span>
+        <a class="nav__link" href="https://github.com/gmic-ai-inc/voice-to-us" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.51 11.51 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.38-3.88-1.38-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.45.11-3.02 0 0 .97-.31 3.18 1.18a10.98 10.98 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.57.23 2.73.11 3.02.73.8 1.18 1.83 1.18 3.09 0 4.41-2.7 5.39-5.27 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </nav>
 
-    <h2>1. Inline — auto-mount</h2>
-    <pre><code>&lt;script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
-  data-backend="https://gmic.ai/voice2us"
-  data-mount="#voice-btn"&gt;&lt;/script&gt;
-&lt;div id="voice-btn"&gt;&lt;/div&gt;</code></pre>
-    <div class="inline-mount">
-      <div id="voice-btn"></div>
+    <header class="hero" id="top">
+      <span class="hero__eyebrow">Embeddable voice widget</span>
+      <h1>
+        One click, one voice, <br />
+        straight to <span class="grad">your Telegram</span>.
+      </h1>
+      <p class="hero__sub">
+        Drop a mic button into any page with three lines of HTML. Visitors record a voice note, and it lands in your Telegram with the page title, URL, and timestamp attached.
+      </p>
+      <div class="hero__ctas">
+        <a class="btn btn--primary" href="#integrate">Get started →</a>
+        <a class="btn btn--ghost" href="https://github.com/gmic-ai-inc/voice-to-us" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.51 11.51 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.38-3.88-1.38-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.45.11-3.02 0 0 .97-.31 3.18 1.18a10.98 10.98 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.57.23 2.73.11 3.02.73.8 1.18 1.83 1.18 3.09 0 4.41-2.7 5.39-5.27 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="hero__try">
+        <small>TRY IT LIVE</small>
+        <div id="voice-btn-hero"></div>
+        <small>Tap the mic, say something, tap again.</small>
+      </div>
+    </header>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+        </div>
+        <h3>Three-line embed</h3>
+        <p>One script tag, one placeholder div. No framework required.</p>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+        </div>
+        <h3>Shadow DOM isolated</h3>
+        <p>Host page styles can't leak in. Widget styles can't leak out.</p>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+        </div>
+        <h3>Fully themeable</h3>
+        <p>Colors, size, position, labels — all via <code>data-*</code> attributes.</p>
+      </div>
+      <div class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        </div>
+        <h3>Context attached</h3>
+        <p>Page title, URL, and timestamp arrive alongside every voice note.</p>
+      </div>
     </div>
 
-    <h2>2. Programmatic</h2>
-    <pre><code>&lt;script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"&gt;&lt;/script&gt;
-&lt;div id="voice-btn-2"&gt;&lt;/div&gt;
-&lt;script&gt;
-  VoiceToUs.mount('#voice-btn-2', { backend: 'https://gmic.ai/voice2us' });
-&lt;/script&gt;</code></pre>
-    <div class="inline-mount">
-      <div id="voice-btn-2"></div>
-    </div>
+    <main>
+      <section id="integrate">
+        <h2><span class="num">01</span> Inline auto-mount</h2>
+        <p>The simplest path. Add the script tag, add a placeholder div, done.</p>
+        <div class="card">
+          <div class="card__code">
+            <button class="copy" data-copy>Copy</button>
+            <pre><code><span class="hl-tag">&lt;script</span>
+  <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span>
+  <span class="hl-attr">data-backend</span>=<span class="hl-str">"https://gmic.ai/voice2us"</span>
+  <span class="hl-attr">data-mount</span>=<span class="hl-str">"#voice-btn"</span>
+  <span class="hl-attr">async</span><span class="hl-tag">&gt;&lt;/script&gt;</span>
+<span class="hl-tag">&lt;div</span> <span class="hl-attr">id</span>=<span class="hl-str">"voice-btn"</span><span class="hl-tag">&gt;&lt;/div&gt;</span></code></pre>
+          </div>
+          <div class="card__preview">
+            <small>LIVE</small>
+            <div id="voice-btn"></div>
+          </div>
+        </div>
+      </section>
 
-    <h2>3. Floating bubble</h2>
-    <pre><code>&lt;script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
-  data-backend="https://gmic.ai/voice2us"
-  data-floating="true"
-  data-placement="bottom-center"&gt;&lt;/script&gt;</code></pre>
-    <p><code>data-placement</code> accepts <code>bottom-right</code> (default), <code>bottom-center</code>, or <code>bottom-left</code>. Try it live:</p>
-    <p style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-      <label><input type="checkbox" id="toggle-float" /> Show floating bubble</label>
-      <select id="placement-select" style="padding:.25rem .5rem">
-        <option value="bottom-right">bottom-right</option>
-        <option value="bottom-center" selected>bottom-center</option>
-        <option value="bottom-left">bottom-left</option>
-      </select>
-    </p>
+      <section>
+        <h2><span class="num">02</span> Programmatic mount</h2>
+        <p>For SPAs or when the placeholder renders after the page loads.</p>
+        <div class="card">
+          <div class="card__code">
+            <button class="copy" data-copy>Copy</button>
+            <pre><code><span class="hl-tag">&lt;script</span> <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span><span class="hl-tag">&gt;&lt;/script&gt;</span>
+<span class="hl-tag">&lt;div</span> <span class="hl-attr">id</span>=<span class="hl-str">"voice-btn"</span><span class="hl-tag">&gt;&lt;/div&gt;</span>
+<span class="hl-tag">&lt;script&gt;</span>
+  VoiceToUs.mount(<span class="hl-str">'#voice-btn'</span>, {
+    backend: <span class="hl-str">'https://gmic.ai/voice2us'</span>,
+  });
+<span class="hl-tag">&lt;/script&gt;</span></code></pre>
+          </div>
+          <div class="card__preview">
+            <small>LIVE</small>
+            <div id="voice-btn-2"></div>
+          </div>
+        </div>
+      </section>
 
-    <h2>4. Custom styling</h2>
-    <p>Override colors, size, and labels via <code>data-*</code> attributes or the <code>theme</code> / <code>labels</code> options.</p>
-    <pre><code>&lt;script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
-  data-backend="https://gmic.ai/voice2us"
-  data-mount="#voice-btn-pink"
-  data-color="#e91e63"
-  data-ring-pulse-color="#f48fb1"
-  data-size="88"
-  data-label-idle="Send us a voice note"&gt;&lt;/script&gt;</code></pre>
-    <div class="inline-mount" style="gap:3rem">
-      <div id="voice-btn-pink"></div>
-      <div id="voice-btn-blue"></div>
-      <div id="voice-btn-mono"></div>
-    </div>
-    <p style="font-size:.85rem;color:#666;text-align:center;margin-top:-0.5rem">
-      Three instances above use pink / blue / minimal themes. See the page source.
-    </p>
+      <section>
+        <h2><span class="num">03</span> Floating bubble</h2>
+        <p>Pinned to a corner or the bottom center, like a chat widget. No placeholder needed.</p>
+        <div class="card">
+          <div class="card__code">
+            <button class="copy" data-copy>Copy</button>
+            <pre><code><span class="hl-tag">&lt;script</span>
+  <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span>
+  <span class="hl-attr">data-backend</span>=<span class="hl-str">"https://gmic.ai/voice2us"</span>
+  <span class="hl-attr">data-floating</span>=<span class="hl-str">"true"</span>
+  <span class="hl-attr">data-placement</span>=<span class="hl-str">"bottom-center"</span>
+  <span class="hl-attr">async</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
+          </div>
+          <div class="card__preview">
+            <small>TOGGLE</small>
+            <div style="color:var(--muted); font-size:.85rem; text-align:center; max-width:220px">
+              Enable below to see it appear, and switch placement on the fly.
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <label><input type="checkbox" id="toggle-float" /> Show floating bubble</label>
+          <span style="color:var(--faint)">·</span>
+          <label>
+            Placement
+            <select id="placement-select">
+              <option value="bottom-right">bottom-right</option>
+              <option value="bottom-center" selected>bottom-center</option>
+              <option value="bottom-left">bottom-left</option>
+            </select>
+          </label>
+        </div>
+      </section>
 
-    <h2>5. Custom tip / status text (every state)</h2>
-    <p>All five status messages are overridable via <code>data-label-*</code> attributes or the <code>labels</code> option. Use this for localization or brand voice.</p>
-    <pre><code>&lt;script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"
-  data-backend="https://gmic.ai/voice2us"
-  data-mount="#voice-btn-cn"
-  data-label-idle="按住说话"
-  data-label-recording="录音中… 再点一次结束"
-  data-label-uploading="发送中…"
-  data-label-sent="已送达"
-  data-label-error="出错了"&gt;&lt;/script&gt;</code></pre>
-    <div class="inline-mount">
-      <div id="voice-btn-cn"></div>
-    </div>
-    <p style="font-size:.85rem;color:#666;text-align:center;margin-top:-0.5rem">
-      Try tapping above — the label cycles through all five custom states.
-    </p>
+      <section>
+        <h2><span class="num">04</span> Custom styling</h2>
+        <p>Override colors, size, and labels via <code>data-*</code> attributes or the <code>theme</code> / <code>labels</code> option.</p>
+        <div class="card">
+          <div class="card__code">
+            <button class="copy" data-copy>Copy</button>
+            <pre><code><span class="hl-tag">&lt;script</span>
+  <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span>
+  <span class="hl-attr">data-backend</span>=<span class="hl-str">"https://gmic.ai/voice2us"</span>
+  <span class="hl-attr">data-mount</span>=<span class="hl-str">"#voice-btn-pink"</span>
+  <span class="hl-attr">data-color</span>=<span class="hl-str">"#e91e63"</span>
+  <span class="hl-attr">data-ring-pulse-color</span>=<span class="hl-str">"#f48fb1"</span>
+  <span class="hl-attr">data-size</span>=<span class="hl-str">"88"</span>
+  <span class="hl-attr">data-label-idle</span>=<span class="hl-str">"Send us a voice note"</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
+          </div>
+          <div class="card__preview" style="min-height:300px">
+            <small>THREE THEMES</small>
+            <div class="theme-gallery">
+              <div id="voice-btn-pink"></div>
+              <div id="voice-btn-blue"></div>
+              <div id="voice-btn-mono"></div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <!-- load the widget once; use programmatic mounts below -->
+      <section>
+        <h2><span class="num">05</span> Custom tip text (all states)</h2>
+        <p>Every status message is overridable — for localization, brand voice, or whatever tone fits your page.</p>
+        <div class="card">
+          <div class="card__code">
+            <button class="copy" data-copy>Copy</button>
+            <pre><code><span class="hl-tag">&lt;script</span>
+  <span class="hl-attr">src</span>=<span class="hl-str">"https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js"</span>
+  <span class="hl-attr">data-backend</span>=<span class="hl-str">"https://gmic.ai/voice2us"</span>
+  <span class="hl-attr">data-mount</span>=<span class="hl-str">"#voice-btn-cn"</span>
+  <span class="hl-attr">data-label-idle</span>=<span class="hl-str">"按住说话"</span>
+  <span class="hl-attr">data-label-recording</span>=<span class="hl-str">"录音中… 再点一次结束"</span>
+  <span class="hl-attr">data-label-uploading</span>=<span class="hl-str">"发送中…"</span>
+  <span class="hl-attr">data-label-sent</span>=<span class="hl-str">"已送达"</span>
+  <span class="hl-attr">data-label-error</span>=<span class="hl-str">"出错了"</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
+          </div>
+          <div class="card__preview">
+            <small>中文示例</small>
+            <div id="voice-btn-cn"></div>
+            <small style="color:var(--muted); text-transform:none; letter-spacing:0">
+              Tap through — labels change for every state.
+            </small>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://github.com/gmic-ai-inc/voice-to-us" target="_blank" rel="noopener">GitHub</a>
+      <span class="dot">·</span>
+      <a href="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.2/widget/voice-to-us.js" target="_blank" rel="noopener">CDN</a>
+      <span class="dot">·</span>
+      Built by GMIC AI · <a href="mailto:charles@gmic.ai">charles@gmic.ai</a>
+    </footer>
+
     <script src="widget.js"></script>
     <script>
-      // Derive the backend URL from this page's own location so the demo works
-      // at both http://localhost:4000/widget-demo and https://gmic.ai/voice2us/widget-demo
       var BACKEND = new URL('.', location.href).href.replace(/\/$/, '');
+
+      // hero widget
+      VoiceToUs.mount('#voice-btn-hero', {
+        backend: BACKEND,
+        theme: { size: 80 },
+        labels: { idle: 'Tap the mic' },
+      });
+
       VoiceToUs.mount('#voice-btn', { backend: BACKEND });
       VoiceToUs.mount('#voice-btn-2', { backend: BACKEND });
 
@@ -127,7 +578,7 @@
           color: '#e91e63',
           ringPulseColor: '#f48fb1',
           labelColor: '#880e4f',
-          size: 88,
+          size: 72,
         },
         labels: { idle: 'Send us a voice note' },
       });
@@ -139,20 +590,9 @@
           ringColor: '#bbdefb',
           ringPulseColor: '#64b5f6',
           labelColor: '#0d47a1',
-          size: 72,
+          size: 64,
         },
         labels: { idle: 'Ask a question', sent: 'Got it!' },
-      });
-
-      VoiceToUs.mount('#voice-btn-cn', {
-        backend: BACKEND,
-        labels: {
-          idle: '按住说话',
-          recording: '录音中… 再点一次结束',
-          uploading: '发送中…',
-          sent: '已送达',
-          error: '出错了',
-        },
       });
 
       VoiceToUs.mount('#voice-btn-mono', {
@@ -167,6 +607,18 @@
         labels: { idle: 'Hold to speak' },
       });
 
+      VoiceToUs.mount('#voice-btn-cn', {
+        backend: BACKEND,
+        labels: {
+          idle: '按住说话',
+          recording: '录音中… 再点一次结束',
+          uploading: '发送中…',
+          sent: '已送达',
+          error: '出错了',
+        },
+      });
+
+      // floating toggle
       var floatingInstance = null;
       var placementSelect = document.getElementById('placement-select');
       var floatToggle = document.getElementById('toggle-float');
@@ -177,7 +629,7 @@
           backend: BACKEND,
           floating: true,
           placement: placementSelect.value,
-          theme: { color: '#e91e63', ringPulseColor: '#f48fb1' },
+          theme: { color: '#6366f1', ringPulseColor: '#a5b4fc' },
         });
       }
       function unmountFloating() {
@@ -192,6 +644,23 @@
       });
       placementSelect.addEventListener('change', function () {
         if (floatToggle.checked) mountFloating();
+      });
+
+      // copy-to-clipboard for every code block
+      document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var code = btn.parentElement.querySelector('code');
+          if (!code) return;
+          navigator.clipboard.writeText(code.innerText).then(function () {
+            var prev = btn.textContent;
+            btn.textContent = 'Copied ✓';
+            btn.classList.add('done');
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove('done');
+            }, 1400);
+          });
+        });
       });
     </script>
   </body>
