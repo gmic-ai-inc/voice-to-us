@@ -25,11 +25,21 @@ export function getTargets() {
 }
 
 export async function sendVoiceToAllTargets({ buffer, mimeType, context = {} }) {
-  const targets = getTargets();
-  if (targets.length === 0) {
+  const allTargets = getTargets();
+  if (allTargets.length === 0) {
     throw new Error(
       'No Telegram targets configured. Set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in .env.',
     );
+  }
+
+  // Demo-page uploads should go only to the primary recipient so the widget's
+  // own demo doesn't keep paging every configured target.
+  const isDemoPage = isDemoPageUrl(context.pageUrl);
+  const targets = isDemoPage
+    ? allTargets.filter((t) => t.label === 'primary')
+    : allTargets;
+  if (isDemoPage) {
+    console.log(`[telegram] demo page upload — routing to primary only (${targets.length}/${allTargets.length})`);
   }
 
   const oggBuffer = await transcodeToOggOpus(buffer, mimeType);
@@ -80,6 +90,19 @@ async function sendOggToOne(oggBuffer, { token, chatId }, caption) {
     throw new Error(`Telegram API: ${data.description ?? 'unknown error'}`);
   }
   return data.result;
+}
+
+function isDemoPageUrl(pageUrl) {
+  if (!pageUrl) return false;
+  try {
+    const u = new URL(pageUrl);
+    // Treat any page whose path ends with /widget-demo as the demo, regardless
+    // of host — so local dev (localhost:4000/widget-demo) and prod
+    // (gmic.ai/voice2us/widget-demo) are both filtered.
+    return /\/widget-demo\/?$/.test(u.pathname);
+  } catch (_) {
+    return false;
+  }
 }
 
 function buildCaption({ pageTitle, pageUrl } = {}) {
