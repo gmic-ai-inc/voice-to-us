@@ -15,12 +15,13 @@
         --card: #ffffff;
         --accent: #6366f1;
         --accent-2: #ec4899;
-        --code-bg: #0f1115;
-        --code-fg: #e4e7ef;
-        --code-comment: #6b7283;
-        --code-string: #a5d6a7;
-        --code-attr: #82aaff;
-        --code-tag: #f48fb1;
+        --code-bg: #f6f8fa;
+        --code-fg: #24292f;
+        --code-border: #e1e4e8;
+        --code-comment: #6a737d;
+        --code-string: #032f62;
+        --code-attr: #6f42c1;
+        --code-tag: #22863a;
       }
 
       * { box-sizing: border-box; }
@@ -264,22 +265,22 @@
         top: .6rem; right: .6rem;
         padding: .3rem .55rem;
         font-size: .72rem;
-        border: 1px solid rgba(255,255,255,.15);
-        background: rgba(255,255,255,.05);
-        color: var(--code-fg);
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
         border-radius: 6px;
         cursor: pointer;
-        transition: background .12s;
+        transition: background .12s, color .12s;
       }
-      .card__code .copy:hover { background: rgba(255,255,255,.12); }
-      .card__code .copy.done { background: rgba(100,200,130,.22); border-color: rgba(100,200,130,.4); }
+      .card__code .copy:hover { background: #eef0f5; color: var(--ink); }
+      .card__code .copy.done { background: #e7f5ec; border-color: #b7e0c4; color: #1e7a3c; }
 
       .card__preview {
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
         gap: .75rem;
         padding: 1.75rem 1rem;
-        background: #f6f7fa;
+        background: #fff;
         border-left: 1px solid var(--line);
         min-height: 220px;
       }
