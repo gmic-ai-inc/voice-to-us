@@ -61,6 +61,12 @@
     '.ring{position:absolute;inset:calc(var(--v2u-size) * -0.22);border-radius:9999px;border:1px solid var(--v2u-ring-color);pointer-events:none}',
     '.ring.pulse{border-color:var(--v2u-ring-pulse-color);animation:v2u-pulse 1.4s ease-out infinite}',
     '@keyframes v2u-pulse{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.45);opacity:0}}',
+    /* attention-grabbing radar wave on first view — stopped after a few cycles */
+    '.ring.wave{border-color:var(--v2u-ring-pulse-color);opacity:0;animation:v2u-wave 1.8s ease-out infinite;will-change:transform,opacity}',
+    '.ring.wave.w2{animation-delay:.6s}',
+    '.ring.wave.w3{animation-delay:1.2s}',
+    '@keyframes v2u-wave{0%{transform:scale(.85);opacity:.6}80%{opacity:0}100%{transform:scale(1.7);opacity:0}}',
+    '@media (prefers-reduced-motion: reduce){.ring.wave{animation:none;display:none}}',
     '.icon{display:flex;align-items:center;justify-content:center;width:calc(var(--v2u-size) * 0.4);height:calc(var(--v2u-size) * 0.4);line-height:0}',
     '.icon svg{width:100%;height:100%;display:block}',
     /* floating mode: tighter layout, no idle outer ring, smaller defaults */
@@ -69,8 +75,8 @@
     '.wrap.floating.place-left{align-items:flex-start}',
     '.wrap.floating.place-center{align-items:center}',
     '.wrap.floating .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}',
-    '.wrap.floating .ring:not(.pulse){display:none}',
-    '.wrap.floating .ring.pulse{inset:calc(var(--v2u-size) * -0.14)}',
+    '.wrap.floating .ring:not(.pulse):not(.wave){display:none}',
+    '.wrap.floating .ring.pulse,.wrap.floating .ring.wave{inset:calc(var(--v2u-size) * -0.14)}',
     '.wrap.floating .label{background:#fff;color:#222;border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:.78rem;min-width:0;padding:.28rem .65rem;border-radius:999px}',
   ].join('');
 
@@ -149,6 +155,18 @@
 
     btn.appendChild(ringStatic);
     btn.appendChild(ringPulse);
+
+    var waveRings = [];
+    var waveTimer = null;
+    if (options.attention !== false) {
+      ['', 'w2', 'w3'].forEach(function (mod) {
+        var w = document.createElement('span');
+        w.className = 'ring wave' + (mod ? ' ' + mod : '');
+        btn.appendChild(w);
+        waveRings.push(w);
+      });
+    }
+
     btn.appendChild(iconWrap);
     wrap.appendChild(labelEl);
     wrap.appendChild(btn);
@@ -158,6 +176,20 @@
     var recorder = null;
     var stream = null;
     var chunks = [];
+
+    function stopWaves() {
+      if (waveTimer) { clearTimeout(waveTimer); waveTimer = null; }
+      while (waveRings.length) {
+        var el = waveRings.pop();
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }
+    }
+    if (waveRings.length) {
+      var duration = typeof options.attentionDuration === 'number'
+        ? options.attentionDuration
+        : 6000;
+      waveTimer = setTimeout(stopWaves, duration);
+    }
 
     function setStatus(next, message) {
       status = next;
@@ -273,6 +305,7 @@
     }
 
     btn.addEventListener('click', function () {
+      stopWaves();
       if (status === 'recording') stopRecording();
       else if (status === 'idle' || status === 'sent' || status === 'error')
         startRecording();
@@ -280,6 +313,7 @@
 
     return {
       destroy: function () {
+        stopWaves();
         try {
           if (recorder && recorder.state !== 'inactive') recorder.stop();
         } catch (_) {}
@@ -362,10 +396,18 @@
     var theme = readThemeFromScript(script);
     var labels = readLabelsFromScript(script);
 
+    var attentionAttr = script.getAttribute('data-attention');
+    var attentionDurAttr = script.getAttribute('data-attention-duration');
+
     var run = function () {
       try {
         var opts = { backend: backend, theme: theme, labels: labels };
         if (placement) opts.placement = placement;
+        if (attentionAttr === 'false') opts.attention = false;
+        if (attentionDurAttr) {
+          var n = parseInt(attentionDurAttr, 10);
+          if (!isNaN(n)) opts.attentionDuration = n;
+        }
         if (floating) {
           opts.floating = true;
           mount(document.body, opts);
