@@ -50,6 +50,8 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
       context: {
         pageTitle: req.body?.pageTitle,
         pageUrl: req.body?.pageUrl,
+        email: req.body?.email,
+        phone: req.body?.phone,
       },
     });
     res.json({

@@ -27,7 +27,28 @@
     uploading: 'Sending…',
     sent: 'Sent!',
     error: 'Error',
+    formTitle: 'Leave a way to reach you',
+    formHint: 'Email or phone — at least one (so we can reply).',
+    emailPlaceholder: 'Email (optional)',
+    phonePlaceholder: 'Phone (optional)',
+    formSubmit: 'Send',
+    formCancel: 'Cancel',
+    formInvalidEmail: 'That email looks off',
+    ctaTitle: 'Tap below to start your AI demo call.',
+    ctaButton: 'Call (669) 900-0008',
+    ctaReportPrefix: 'Report will be texted to',
+    ctaStep1: '<b>AI picks up</b> instantly',
+    ctaStep2: '<b>Describe any job</b> — talk naturally',
+    ctaStep3: '<b>Get a text</b> with your work order',
+    ctaClose: 'Close',
   };
+
+  var DEFAULT_CTA_URL = 'tel:+16699000008';
+
+  var PHONE_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>' +
+    '</svg>';
 
   var PLACEMENT_CSS = {
     'bottom-right':  'right:24px;bottom:24px;',
@@ -78,6 +99,40 @@
     '.wrap.floating .ring:not(.pulse):not(.wave){display:none}',
     '.wrap.floating .ring.pulse,.wrap.floating .ring.wave{inset:calc(var(--v2u-size) * -0.14)}',
     '.wrap.floating .label{background:#fff;color:#222;border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:.78rem;min-width:0;padding:.28rem .65rem;border-radius:999px}',
+    /* contact form (shown after recording stops) */
+    '.form{display:none;flex-direction:column;gap:.6rem;width:280px;max-width:90vw;padding:1rem 1.1rem;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);box-sizing:border-box}',
+    '.wrap.show-form .form{display:flex}',
+    '.wrap.show-form .label,.wrap.show-form .btn{display:none}',
+    '.form__title{font-size:.95rem;font-weight:600;color:#111;margin:0}',
+    '.form__hint{font-size:.78rem;color:#6b7280;margin:0}',
+    '.form__input{appearance:none;font:inherit;font-size:.9rem;padding:.55rem .7rem;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#111;outline:none;width:100%;box-sizing:border-box}',
+    '.form__input:focus{border-color:var(--v2u-color);box-shadow:0 0 0 3px rgba(0,0,0,.06)}',
+    '.form__input.invalid{border-color:var(--v2u-error-color)}',
+    '.form__error{font-size:.75rem;color:var(--v2u-error-color);margin:0;min-height:1em}',
+    '.form__actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.2rem}',
+    '.form__btn{font:inherit;font-size:.85rem;padding:.45rem .9rem;border-radius:6px;border:1px solid transparent;cursor:pointer;background:#fff}',
+    '.form__btn--cancel{color:#374151;border-color:#d1d5db}',
+    '.form__btn--cancel:hover{background:#f3f4f6}',
+    '.form__btn--submit{background:var(--v2u-color);color:var(--v2u-text-color);border-color:var(--v2u-color)}',
+    '.form__btn--submit:disabled{opacity:.45;cursor:not-allowed}',
+    '.form__btn--submit:not(:disabled):hover{filter:brightness(.92)}',
+    /* demo-call CTA shown after a successful upload */
+    '.cta{display:none;flex-direction:column;align-items:stretch;gap:.85rem;width:320px;max-width:92vw;padding:1.25rem 1.1rem 1.1rem;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08);position:relative;box-sizing:border-box;text-align:center}',
+    '.wrap.show-cta .cta{display:flex}',
+    '.wrap.show-cta .label{display:none}',
+    '.cta__close{position:absolute;top:.45rem;right:.5rem;background:none;border:none;font-size:1.15rem;line-height:1;color:#9ca3af;cursor:pointer;padding:.15rem .4rem;border-radius:4px}',
+    '.cta__close:hover{background:#f3f4f6;color:#374151}',
+    '.cta__title{font-size:.92rem;font-weight:500;color:#374151;margin:0 1rem;line-height:1.4}',
+    '.cta__btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;padding:.85rem 1rem;background:#22c55e;color:#fff;border-radius:9999px;font:inherit;font-size:1.05rem;font-weight:600;text-decoration:none;box-shadow:0 8px 24px rgba(34,197,94,.35);transition:filter .12s,transform .1s}',
+    '.cta__btn:hover{filter:brightness(.96);text-decoration:none;color:#fff}',
+    '.cta__btn:active{transform:scale(.98)}',
+    '.cta__btn-icon{width:1.2em;height:1.2em;display:inline-block;flex:none}',
+    '.cta__sub{font-size:.78rem;color:#6b7280;margin:0;line-height:1.4}',
+    '.cta__sub b{color:#374151;font-weight:600}',
+    '.cta__steps{display:flex;flex-direction:column;gap:.55rem;margin:.4rem 0 0;padding:0;list-style:none;text-align:left}',
+    '.cta__step{display:flex;align-items:center;gap:.65rem;font-size:.85rem;color:#374151}',
+    '.cta__step-num{flex:none;width:1.55rem;height:1.55rem;border-radius:9999px;background:#f3f4f6;color:#374151;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center}',
+    '.cta__step b{color:#111;font-weight:600}',
   ].join('');
 
   var MIC_SVG =
@@ -170,12 +225,167 @@
     btn.appendChild(iconWrap);
     wrap.appendChild(labelEl);
     wrap.appendChild(btn);
+
+    var collectContact = options.collectContact !== false;
+
+    var formEl = null;
+    var emailInput = null;
+    var phoneInput = null;
+    var submitBtn = null;
+    var cancelBtn = null;
+    var errorEl = null;
+    if (collectContact) {
+      formEl = document.createElement('form');
+      formEl.className = 'form';
+      formEl.setAttribute('novalidate', '');
+
+      var titleEl = document.createElement('div');
+      titleEl.className = 'form__title';
+      titleEl.textContent = labels.formTitle;
+
+      var hintEl = document.createElement('div');
+      hintEl.className = 'form__hint';
+      hintEl.textContent = labels.formHint;
+
+      emailInput = document.createElement('input');
+      emailInput.className = 'form__input';
+      emailInput.type = 'email';
+      emailInput.autocomplete = 'email';
+      emailInput.placeholder = labels.emailPlaceholder;
+      emailInput.setAttribute('aria-label', labels.emailPlaceholder);
+
+      phoneInput = document.createElement('input');
+      phoneInput.className = 'form__input';
+      phoneInput.type = 'tel';
+      phoneInput.autocomplete = 'tel';
+      phoneInput.placeholder = labels.phonePlaceholder;
+      phoneInput.setAttribute('aria-label', labels.phonePlaceholder);
+
+      errorEl = document.createElement('div');
+      errorEl.className = 'form__error';
+
+      var actionsEl = document.createElement('div');
+      actionsEl.className = 'form__actions';
+
+      cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'form__btn form__btn--cancel';
+      cancelBtn.textContent = labels.formCancel;
+
+      submitBtn = document.createElement('button');
+      submitBtn.type = 'submit';
+      submitBtn.className = 'form__btn form__btn--submit';
+      submitBtn.textContent = labels.formSubmit;
+      submitBtn.disabled = true;
+
+      actionsEl.appendChild(cancelBtn);
+      actionsEl.appendChild(submitBtn);
+
+      formEl.appendChild(titleEl);
+      formEl.appendChild(hintEl);
+      formEl.appendChild(emailInput);
+      formEl.appendChild(phoneInput);
+      formEl.appendChild(errorEl);
+      formEl.appendChild(actionsEl);
+      wrap.appendChild(formEl);
+    }
+
+    var ctaUrl = (options.ctaUrl != null && options.ctaUrl !== '')
+      ? String(options.ctaUrl)
+      : DEFAULT_CTA_URL;
+    var ctaEnabled = options.ctaEnabled !== false && !!ctaUrl;
+    var ctaEl = null;
+    var ctaSubEl = null;
+    if (ctaEnabled) {
+      ctaEl = document.createElement('div');
+      ctaEl.className = 'cta';
+      ctaEl.setAttribute('role', 'dialog');
+      ctaEl.setAttribute('aria-label', labels.ctaTitle);
+
+      var ctaCloseBtn = document.createElement('button');
+      ctaCloseBtn.type = 'button';
+      ctaCloseBtn.className = 'cta__close';
+      ctaCloseBtn.setAttribute('aria-label', labels.ctaClose);
+      ctaCloseBtn.textContent = '×';
+
+      var ctaTitleEl = document.createElement('div');
+      ctaTitleEl.className = 'cta__title';
+      ctaTitleEl.textContent = labels.ctaTitle;
+
+      var ctaLink = document.createElement('a');
+      ctaLink.className = 'cta__btn';
+      ctaLink.href = ctaUrl;
+      ctaLink.rel = 'noopener noreferrer';
+      if (!/^tel:|^sms:|^mailto:/i.test(ctaUrl)) ctaLink.target = '_blank';
+      var ctaIcon = document.createElement('span');
+      ctaIcon.className = 'cta__btn-icon';
+      ctaIcon.innerHTML = PHONE_SVG;
+      var ctaLabel = document.createElement('span');
+      ctaLabel.textContent = labels.ctaButton;
+      ctaLink.appendChild(ctaIcon);
+      ctaLink.appendChild(ctaLabel);
+
+      ctaSubEl = document.createElement('div');
+      ctaSubEl.className = 'cta__sub';
+      ctaSubEl.style.display = 'none';
+
+      var stepsList = document.createElement('ol');
+      stepsList.className = 'cta__steps';
+      [labels.ctaStep1, labels.ctaStep2, labels.ctaStep3].forEach(function (text, i) {
+        var li = document.createElement('li');
+        li.className = 'cta__step';
+        var num = document.createElement('span');
+        num.className = 'cta__step-num';
+        num.textContent = String(i + 1);
+        var body = document.createElement('span');
+        body.innerHTML = text; // labels are author-controlled; <b> tags expected
+        li.appendChild(num);
+        li.appendChild(body);
+        stepsList.appendChild(li);
+      });
+
+      ctaEl.appendChild(ctaCloseBtn);
+      ctaEl.appendChild(ctaTitleEl);
+      ctaEl.appendChild(ctaLink);
+      ctaEl.appendChild(ctaSubEl);
+      ctaEl.appendChild(stepsList);
+      wrap.appendChild(ctaEl);
+
+      ctaCloseBtn.addEventListener('click', function () {
+        wrap.classList.remove('show-cta');
+      });
+    }
+
     shadow.appendChild(wrap);
 
     var status = 'idle';
     var recorder = null;
     var stream = null;
     var chunks = [];
+    var pendingBlob = null;
+    var lastContactPhone = '';
+
+    function showCta() {
+      if (!ctaEl) return;
+      if (ctaSubEl) {
+        if (lastContactPhone) {
+          ctaSubEl.innerHTML =
+            escapeHtml(labels.ctaReportPrefix) + ' <b>' + escapeHtml(lastContactPhone) + '</b>';
+          ctaSubEl.style.display = '';
+        } else {
+          ctaSubEl.style.display = 'none';
+        }
+      }
+      wrap.classList.add('show-cta');
+    }
+
+    function hideCta() {
+      if (ctaEl) wrap.classList.remove('show-cta');
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     function stopWaves() {
       if (waveTimer) { clearTimeout(waveTimer); waveTimer = null; }
@@ -224,7 +434,36 @@
       }, ms);
     }
 
-    function upload(blob) {
+    function showContactForm() {
+      status = 'awaiting-contact';
+      wrap.classList.add('show-form');
+      if (errorEl) errorEl.textContent = '';
+      if (emailInput) emailInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+      if (submitBtn) submitBtn.disabled = true;
+      setTimeout(function () { if (emailInput) emailInput.focus(); }, 0);
+    }
+
+    function hideContactForm() {
+      wrap.classList.remove('show-form');
+    }
+
+    function isValidEmail(s) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+    }
+
+    function refreshSubmitState() {
+      if (!submitBtn) return;
+      var e = (emailInput.value || '').trim();
+      var p = (phoneInput.value || '').trim();
+      submitBtn.disabled = !(e || p);
+      if (errorEl && errorEl.textContent && (e || p)) errorEl.textContent = '';
+      if (emailInput.classList.contains('invalid') && (e === '' || isValidEmail(e))) {
+        emailInput.classList.remove('invalid');
+      }
+    }
+
+    function upload(blob, contact) {
       setStatus('uploading');
       var form = new FormData();
       var ext = blob.type.indexOf('webm') >= 0
@@ -239,6 +478,10 @@
         form.append('pageTitle', (document.title || '').slice(0, 300));
         form.append('pageUrl', (location.href || '').slice(0, 800));
       } catch (_) { /* sandboxed iframe: ignore */ }
+      if (contact) {
+        if (contact.email) form.append('email', contact.email.slice(0, 200));
+        if (contact.phone) form.append('phone', contact.phone.slice(0, 50));
+      }
 
       fetch(backend + '/api/upload', { method: 'POST', body: form })
         .then(function (resp) {
@@ -252,7 +495,12 @@
                 throw new Error(data.error || 'HTTP ' + resp.status);
               });
           }
-          flashThenIdle('sent', null, 1800);
+          if (ctaEnabled) {
+            setStatus('idle');
+            showCta();
+          } else {
+            flashThenIdle('sent', null, 1800);
+          }
         })
         .catch(function (err) {
           flashThenIdle('error', err && err.message ? err.message : 'Upload failed', 3000);
@@ -282,7 +530,12 @@
           rec.onstop = function () {
             var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
             cleanupStream();
-            upload(blob);
+            if (collectContact) {
+              pendingBlob = blob;
+              showContactForm();
+            } else {
+              upload(blob, null);
+            }
           };
           rec.start();
           recorder = rec;
@@ -306,10 +559,47 @@
 
     btn.addEventListener('click', function () {
       stopWaves();
+      hideCta();
       if (status === 'recording') stopRecording();
       else if (status === 'idle' || status === 'sent' || status === 'error')
         startRecording();
     });
+
+    if (collectContact) {
+      emailInput.addEventListener('input', refreshSubmitState);
+      phoneInput.addEventListener('input', refreshSubmitState);
+
+      cancelBtn.addEventListener('click', function () {
+        pendingBlob = null;
+        hideContactForm();
+        setStatus('idle');
+      });
+
+      formEl.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = (emailInput.value || '').trim();
+        var phone = (phoneInput.value || '').trim();
+        if (!email && !phone) return;
+        if (email && !isValidEmail(email)) {
+          emailInput.classList.add('invalid');
+          errorEl.textContent = labels.formInvalidEmail;
+          emailInput.focus();
+          return;
+        }
+        var blob = pendingBlob;
+        pendingBlob = null;
+        lastContactPhone = phone;
+        hideContactForm();
+        upload(blob, { email: email, phone: phone });
+      });
+
+      formEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelBtn.click();
+        }
+      });
+    }
 
     return {
       destroy: function () {
@@ -377,6 +667,20 @@
       uploading: 'data-label-uploading',
       sent: 'data-label-sent',
       error: 'data-label-error',
+      formTitle: 'data-label-form-title',
+      formHint: 'data-label-form-hint',
+      emailPlaceholder: 'data-label-email-placeholder',
+      phonePlaceholder: 'data-label-phone-placeholder',
+      formSubmit: 'data-label-form-submit',
+      formCancel: 'data-label-form-cancel',
+      formInvalidEmail: 'data-label-form-invalid-email',
+      ctaTitle: 'data-label-cta-title',
+      ctaButton: 'data-label-cta-button',
+      ctaReportPrefix: 'data-label-cta-report-prefix',
+      ctaStep1: 'data-label-cta-step-1',
+      ctaStep2: 'data-label-cta-step-2',
+      ctaStep3: 'data-label-cta-step-3',
+      ctaClose: 'data-label-cta-close',
     };
     for (var key in map) {
       var v = script.getAttribute(map[key]);
@@ -398,6 +702,9 @@
 
     var attentionAttr = script.getAttribute('data-attention');
     var attentionDurAttr = script.getAttribute('data-attention-duration');
+    var collectContactAttr = script.getAttribute('data-collect-contact');
+    var ctaUrlAttr = script.getAttribute('data-cta-url');
+    var ctaEnabledAttr = script.getAttribute('data-cta-enabled');
 
     var run = function () {
       try {
@@ -408,6 +715,9 @@
           var n = parseInt(attentionDurAttr, 10);
           if (!isNaN(n)) opts.attentionDuration = n;
         }
+        if (collectContactAttr === 'false') opts.collectContact = false;
+        if (ctaEnabledAttr === 'false') opts.ctaEnabled = false;
+        if (ctaUrlAttr) opts.ctaUrl = ctaUrlAttr;
         if (floating) {
           opts.floating = true;
           mount(document.body, opts);
@@ -425,6 +735,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.2' };
+  window.VoiceToUs = { mount: mount, version: '0.1.3' };
   autoInit();
 })();
