@@ -25,7 +25,7 @@
     idle: 'Tap to record',
     recording: 'Recording… tap to stop',
     uploading: 'Sending…',
-    sent: 'Sent!',
+    sent: 'Got it! We\'ll get back to you soon.',
     error: 'Error',
     formTitle: 'Want a reply? (pick any one)',
     chanTelegram: 'Reply via Telegram',
@@ -781,7 +781,7 @@
           if (collectContact && receiptEnabled) {
             showSuccess();
           } else {
-            flashThenIdle('sent', null, 1800);
+            flashThenIdle('sent', null, 3500);
           }
           return true;
         })
@@ -1124,6 +1124,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.6' };
+  window.VoiceToUs = { mount: mount, version: '0.1.7' };
   autoInit();
 })();
