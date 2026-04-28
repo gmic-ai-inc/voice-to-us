@@ -349,6 +349,8 @@
         ? options.googleClientId
         : DEFAULT_GOOGLE_CLIENT_ID,
     ).trim();
+    // Receipt link is opt-in (default off) until the flow is polished.
+    var receiptEnabled = options.receiptEnabled === true;
 
     var formEl = null;
     var emailInput = null;
@@ -487,37 +489,39 @@
       emailDetails.appendChild(emailBody);
       formEl.appendChild(emailDetails);
 
-      // receipt-link panel — slug is regenerated every time the form opens
-      var receiptDivider = document.createElement('div');
-      receiptDivider.className = 'form__divider';
-      receiptDivider.textContent = labels.formDivider;
-      formEl.appendChild(receiptDivider);
+      if (receiptEnabled) {
+        // receipt-link panel — slug is regenerated every time the form opens
+        var receiptDivider = document.createElement('div');
+        receiptDivider.className = 'form__divider';
+        receiptDivider.textContent = labels.formDivider;
+        formEl.appendChild(receiptDivider);
 
-      receiptEl = document.createElement('div');
-      receiptEl.className = 'form__receipt';
+        receiptEl = document.createElement('div');
+        receiptEl.className = 'form__receipt';
 
-      var receiptLabel = document.createElement('div');
-      receiptLabel.className = 'form__receipt-label';
-      receiptLabel.innerHTML = PIN_SVG + '<span></span>';
-      receiptLabel.querySelector('span').textContent = labels.receiptLabel;
+        var receiptLabel = document.createElement('div');
+        receiptLabel.className = 'form__receipt-label';
+        receiptLabel.innerHTML = PIN_SVG + '<span></span>';
+        receiptLabel.querySelector('span').textContent = labels.receiptLabel;
 
-      var receiptRow = document.createElement('div');
-      receiptRow.className = 'form__receipt-row';
+        var receiptRow = document.createElement('div');
+        receiptRow.className = 'form__receipt-row';
 
-      receiptUrlEl = document.createElement('div');
-      receiptUrlEl.className = 'form__receipt-url';
-      receiptUrlEl.setAttribute('title', '');
+        receiptUrlEl = document.createElement('div');
+        receiptUrlEl.className = 'form__receipt-url';
+        receiptUrlEl.setAttribute('title', '');
 
-      receiptCopyBtn = document.createElement('button');
-      receiptCopyBtn.type = 'button';
-      receiptCopyBtn.className = 'form__receipt-copy';
-      receiptCopyBtn.textContent = labels.receiptCopy;
+        receiptCopyBtn = document.createElement('button');
+        receiptCopyBtn.type = 'button';
+        receiptCopyBtn.className = 'form__receipt-copy';
+        receiptCopyBtn.textContent = labels.receiptCopy;
 
-      receiptRow.appendChild(receiptUrlEl);
-      receiptRow.appendChild(receiptCopyBtn);
-      receiptEl.appendChild(receiptLabel);
-      receiptEl.appendChild(receiptRow);
-      formEl.appendChild(receiptEl);
+        receiptRow.appendChild(receiptUrlEl);
+        receiptRow.appendChild(receiptCopyBtn);
+        receiptEl.appendChild(receiptLabel);
+        receiptEl.appendChild(receiptRow);
+        formEl.appendChild(receiptEl);
+      }
 
       var footerEl = document.createElement('div');
       footerEl.className = 'form__footer';
@@ -526,53 +530,55 @@
 
       wrap.appendChild(formEl);
 
-      // post-submit success panel
-      successEl = document.createElement('div');
-      successEl.className = 'success';
+      if (receiptEnabled) {
+        // post-submit success panel — only used when receipt links are on
+        successEl = document.createElement('div');
+        successEl.className = 'success';
 
-      successCloseBtn = document.createElement('button');
-      successCloseBtn.type = 'button';
-      successCloseBtn.className = 'success__close';
-      successCloseBtn.setAttribute('aria-label', labels.formClose);
-      successCloseBtn.textContent = '×';
+        successCloseBtn = document.createElement('button');
+        successCloseBtn.type = 'button';
+        successCloseBtn.className = 'success__close';
+        successCloseBtn.setAttribute('aria-label', labels.formClose);
+        successCloseBtn.textContent = '×';
 
-      var checkEl = document.createElement('span');
-      checkEl.className = 'success__check';
-      checkEl.innerHTML = CHECK_SVG;
+        var checkEl = document.createElement('span');
+        checkEl.className = 'success__check';
+        checkEl.innerHTML = CHECK_SVG;
 
-      var successTitleEl = document.createElement('div');
-      successTitleEl.className = 'success__title';
-      successTitleEl.textContent = labels.successTitle;
+        var successTitleEl = document.createElement('div');
+        successTitleEl.className = 'success__title';
+        successTitleEl.textContent = labels.successTitle;
 
-      var successSubEl = document.createElement('div');
-      successSubEl.className = 'success__sub';
-      successSubEl.textContent = labels.successSubtitle;
+        var successSubEl = document.createElement('div');
+        successSubEl.className = 'success__sub';
+        successSubEl.textContent = labels.successSubtitle;
 
-      var successReceipt = document.createElement('div');
-      successReceipt.className = 'form__receipt';
-      var sLabel = document.createElement('div');
-      sLabel.className = 'form__receipt-label';
-      sLabel.innerHTML = PIN_SVG + '<span></span>';
-      sLabel.querySelector('span').textContent = labels.receiptLabel;
-      var sRow = document.createElement('div');
-      sRow.className = 'form__receipt-row';
-      successUrlEl = document.createElement('div');
-      successUrlEl.className = 'form__receipt-url';
-      successCopyBtn = document.createElement('button');
-      successCopyBtn.type = 'button';
-      successCopyBtn.className = 'form__receipt-copy';
-      successCopyBtn.textContent = labels.receiptCopy;
-      sRow.appendChild(successUrlEl);
-      sRow.appendChild(successCopyBtn);
-      successReceipt.appendChild(sLabel);
-      successReceipt.appendChild(sRow);
+        var successReceipt = document.createElement('div');
+        successReceipt.className = 'form__receipt';
+        var sLabel = document.createElement('div');
+        sLabel.className = 'form__receipt-label';
+        sLabel.innerHTML = PIN_SVG + '<span></span>';
+        sLabel.querySelector('span').textContent = labels.receiptLabel;
+        var sRow = document.createElement('div');
+        sRow.className = 'form__receipt-row';
+        successUrlEl = document.createElement('div');
+        successUrlEl.className = 'form__receipt-url';
+        successCopyBtn = document.createElement('button');
+        successCopyBtn.type = 'button';
+        successCopyBtn.className = 'form__receipt-copy';
+        successCopyBtn.textContent = labels.receiptCopy;
+        sRow.appendChild(successUrlEl);
+        sRow.appendChild(successCopyBtn);
+        successReceipt.appendChild(sLabel);
+        successReceipt.appendChild(sRow);
 
-      successEl.appendChild(successCloseBtn);
-      successEl.appendChild(checkEl);
-      successEl.appendChild(successTitleEl);
-      successEl.appendChild(successSubEl);
-      successEl.appendChild(successReceipt);
-      wrap.appendChild(successEl);
+        successEl.appendChild(successCloseBtn);
+        successEl.appendChild(checkEl);
+        successEl.appendChild(successTitleEl);
+        successEl.appendChild(successSubEl);
+        successEl.appendChild(successReceipt);
+        wrap.appendChild(successEl);
+      }
     }
 
     shadow.appendChild(wrap);
@@ -697,13 +703,15 @@
       if (emailInput) emailInput.value = '';
       if (emailDetails) emailDetails.open = false;
       setChannelButtonsDisabled(false);
-      if (receiptEl && receiptUrlEl && receiptCopyBtn) {
+      if (receiptEnabled && receiptEl && receiptUrlEl && receiptCopyBtn) {
         currentSlug = randomSlug(12);
         var url = buildReceiptUrl(currentSlug);
         receiptUrlEl.textContent = url;
         receiptUrlEl.setAttribute('title', url);
         receiptCopyBtn.textContent = labels.receiptCopy;
         receiptCopyBtn.classList.remove('copied');
+      } else {
+        currentSlug = '';
       }
     }
 
@@ -770,7 +778,7 @@
                 throw new Error(data.error || 'HTTP ' + resp.status);
               });
           }
-          if (collectContact) {
+          if (collectContact && receiptEnabled) {
             showSuccess();
           } else {
             flashThenIdle('sent', null, 1800);
@@ -1083,6 +1091,7 @@
     var telegramHandleAttr = script.getAttribute('data-telegram-handle');
     var whatsappNumberAttr = script.getAttribute('data-whatsapp-number');
     var googleClientIdAttr = script.getAttribute('data-google-client-id');
+    var receiptEnabledAttr = script.getAttribute('data-receipt-enabled');
 
     var run = function () {
       try {
@@ -1097,6 +1106,7 @@
         if (telegramHandleAttr != null) opts.telegramHandle = telegramHandleAttr;
         if (whatsappNumberAttr != null) opts.whatsappNumber = whatsappNumberAttr;
         if (googleClientIdAttr != null) opts.googleClientId = googleClientIdAttr;
+        if (receiptEnabledAttr === 'true') opts.receiptEnabled = true;
         if (floating) {
           opts.floating = true;
           mount(document.body, opts);
@@ -1114,6 +1124,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.5' };
+  window.VoiceToUs = { mount: mount, version: '0.1.6' };
   autoInit();
 })();
