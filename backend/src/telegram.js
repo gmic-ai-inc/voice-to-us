@@ -158,11 +158,14 @@ function isTruthyEnv(v) {
   return /^(1|true|yes|on)$/i.test(String(v).trim());
 }
 
-function buildCaption({ pageTitle, pageUrl, email, phone, transcript } = {}) {
+function buildCaption({ pageTitle, pageUrl, email, phone, channel, googleName, adminUrl, transcript } = {}) {
   const title = truncate(String(pageTitle ?? '').trim(), 200);
   const url = truncate(String(pageUrl ?? '').trim(), 500);
   const cleanEmail = truncate(String(email ?? '').trim(), 200);
   const cleanPhone = truncate(String(phone ?? '').trim(), 50);
+  const cleanChannel = truncate(String(channel ?? '').trim().toLowerCase(), 30);
+  const cleanName = truncate(String(googleName ?? '').trim(), 80);
+  const cleanAdminUrl = String(adminUrl ?? '').trim();
   const cleanTranscript = String(transcript ?? '').trim();
   const ts =
     new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
@@ -172,8 +175,11 @@ function buildCaption({ pageTitle, pageUrl, email, phone, transcript } = {}) {
   const baseLines = [];
   baseLines.push(`<b>${escapeHtml(title || '(no page title)')}</b>`);
   if (url) baseLines.push(escapeHtml(url));
+  if (cleanChannel) baseLines.push(`Reply via: <b>${escapeHtml(cleanChannel)}</b>`);
+  if (cleanName) baseLines.push(`Name: ${escapeHtml(cleanName)}`);
   if (cleanEmail) baseLines.push(`Email: ${escapeHtml(cleanEmail)}`);
   if (cleanPhone) baseLines.push(`Phone: ${escapeHtml(cleanPhone)}`);
+  if (cleanAdminUrl) baseLines.push(`Reply here: <a href="${escapeHtml(cleanAdminUrl)}">${escapeHtml(cleanAdminUrl)}</a>`);
   baseLines.push(ts);
   const baseLen = baseLines.join('\n').length;
 

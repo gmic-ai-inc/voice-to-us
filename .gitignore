@@ -13,3 +13,6 @@ node_modules/
 **/.next/
 **/out/
 **/dist/
+
+# server-side receipt records (one JSON per voice-note submission)
+backend/submissions/
