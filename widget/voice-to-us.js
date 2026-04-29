@@ -49,7 +49,7 @@
     whatsappPrefilledText: 'Hi! I just left a voice note on your site — looking forward to your reply.',
   };
 
-  var DEFAULT_TELEGRAM_HANDLE = 'hezf411';
+  var DEFAULT_TELEGRAM_HANDLE = 'gmicai';
   var DEFAULT_WHATSAPP_NUMBER = '+16699000008';
   var DEFAULT_GOOGLE_CLIENT_ID = '934733898751-ov2n1oidtm6filhb1fomatnr5pb65p16.apps.googleusercontent.com';
 
@@ -1124,6 +1124,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.7' };
+  window.VoiceToUs = { mount: mount, version: '0.1.8' };
   autoInit();
 })();
