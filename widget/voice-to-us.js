@@ -39,6 +39,8 @@
     receiptCopied: 'Copied!',
     successTitle: 'Sent!',
     successSubtitle: 'Bookmark this link — when our team replies, it appears there.',
+    barWechatLabel: 'Scan to add me on WeChat · 扫一扫加微信',
+    barConnectSection: 'Connect',
     emailExpand: 'Use email instead',
     emailPlaceholder: 'you@example.com',
     formSubmit: 'Send',
@@ -52,6 +54,14 @@
   var DEFAULT_TELEGRAM_HANDLE = 'gmicai';
   var DEFAULT_WHATSAPP_NUMBER = '+16699000008';
   var DEFAULT_GOOGLE_CLIENT_ID = '934733898751-ov2n1oidtm6filhb1fomatnr5pb65p16.apps.googleusercontent.com';
+  /* v0.1.9 floating-bar links — overridable per embed via data-link-* attrs. */
+  var DEFAULT_TWITTER_URL = 'https://x.com/GMICAIINC';
+  var DEFAULT_LINKEDIN_URL = 'https://www.linkedin.com/company/gmicaiinc/';
+  var DEFAULT_GITHUB_URL = 'https://github.com/xtrigg';
+  var DEFAULT_GMICAI_URL = 'https://gmic.ai/';
+  var DEFAULT_TEAM_EMAIL = 't@xtrigg.com';
+  /* QR served from the same backend that serves widget.js — see server.js. */
+  var DEFAULT_WECHAT_QR_PATH = '/wechat-qr.png';
 
   var TELEGRAM_SVG =
     '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
@@ -69,6 +79,48 @@
     '<path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>' +
     '<path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>' +
     '<path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>' +
+    '</svg>';
+
+  /* Bar icons — verbatim from ustrigg.com/about (filled, currentColor). */
+  var BAR_TELEGRAM_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"></path>' +
+    '</svg>';
+  var BAR_WHATSAPP_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.465 3.488"></path>' +
+    '</svg>';
+  var BAR_WECHAT_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M8.667 7.504c.456 0 .831.378.831.838a.838.838 0 0 1-.83.838.836.836 0 0 1-.832-.838.834.834 0 0 1 .831-.838zm5.32 0a.834.834 0 0 1 .831.838.836.836 0 0 1-.83.838.838.838 0 0 1-.832-.838.834.834 0 0 1 .831-.838zM9.5 3C5.358 3 2 5.715 2 9.064c0 1.86 1.04 3.523 2.665 4.65l-.665 2 2.319-1.16c.829.247 1.722.39 2.665.395.215 0 .43-.012.642-.034a4.81 4.81 0 0 1-.297-1.66c0-3.142 2.967-5.7 6.642-5.7.21 0 .417.013.622.038C15.024 4.682 12.483 3 9.5 3zm6.5 6.5c-3.314 0-6 2.13-6 4.75 0 1.485.866 2.815 2.234 3.69l-.567 1.708 2-1c.717.213 1.49.351 2.333.353.21 0 .417-.013.622-.038-.214-.732-.336-1.51-.336-2.314 0-3.142 3.13-5.689 7-5.689l.166.001C23.456 8.27 19.97 6.5 16 6.5z"></path>' +
+    '</svg>';
+  var BAR_DOTS_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<circle cx="6" cy="12" r="1.6"></circle>' +
+    '<circle cx="12" cy="12" r="1.6"></circle>' +
+    '<circle cx="18" cy="12" r="1.6"></circle>' +
+    '</svg>';
+  var X_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"></path>' +
+    '</svg>';
+  var LINKEDIN_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path>' +
+    '</svg>';
+  var GITHUB_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.51 11.51 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.38-3.88-1.38-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.45.11-3.02 0 0 .97-.31 3.18 1.18a10.98 10.98 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.57.23 2.73.11 3.02.73.8 1.18 1.83 1.18 3.09 0 4.41-2.7 5.39-5.27 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"></path>' +
+    '</svg>';
+  var BUILDING_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="4" y="3" width="16" height="18" rx="1.5"></rect>' +
+    '<path d="M9 8h2M13 8h2M9 12h2M13 12h2M9 16h2M13 16h2"></path>' +
+    '</svg>';
+  var MAIL_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="2.5" y="5" width="19" height="14" rx="2"></rect>' +
+    '<path d="m3 7 9 6 9-6"></path>' +
     '</svg>';
 
   var GOOGLE_GSI_SRC = 'https://accounts.google.com/gsi/client';
@@ -218,6 +270,33 @@
     '.form__btn--submit:disabled{opacity:.45;cursor:not-allowed}',
     '.form__btn--submit:not(:disabled):hover{filter:brightness(.92)}',
     '.form__footer{font-size:.7rem;color:#9ca3af;margin:.2rem 0 0;text-align:center;line-height:1.4}',
+    /* v0.1.9 floating-mode bar: quick links + ⋯ menu around the mic */
+    '.bar{position:relative;display:flex;align-items:center;gap:.55rem;flex-direction:row}',
+    '.wrap.show-form .bar,.wrap.show-success .bar{display:none}',
+    '.bar__icon{width:42px;height:42px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;background:#fff;color:#374151;border:1px solid #e5e7eb;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:background .12s,transform .1s,box-shadow .12s}',
+    '.bar__icon:hover{background:#f3f4f6;color:#111;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.08)}',
+    '.bar__icon:active{transform:scale(.96)}',
+    '.bar__icon svg{width:20px;height:20px;display:block}',
+    '.bar__icon-x svg{width:18px;height:18px}',
+    '.bar__menu{position:absolute;bottom:calc(100% + .5rem);right:-.4rem;min-width:200px;padding:.4rem 0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;z-index:1}',
+    '.bar.show-menu .bar__menu{display:block}',
+    '.bar__section{padding:.55rem .9rem .25rem;font-size:.65rem;letter-spacing:.1em;color:#9ca3af;text-transform:uppercase;font-weight:500}',
+    '.bar__menu-item{display:flex;align-items:center;gap:.65rem;padding:.5rem .9rem;font-size:.85rem;color:#1f2937;text-decoration:none;cursor:pointer}',
+    '.bar__menu-item:hover{background:#f3f4f6;text-decoration:none;color:#111}',
+    '.bar__menu-item-icon{width:1rem;height:1rem;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#6b7280}',
+    '.bar__menu-item-icon svg{width:100%;height:100%}',
+    '.bar__wechat-popover{position:absolute;bottom:calc(100% + .5rem);left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:.85rem;display:none;z-index:1;text-align:center}',
+    '.bar.show-wechat .bar__wechat-popover{display:block}',
+    '.bar__wechat-popover img{display:block;width:240px;height:240px;object-fit:contain;border-radius:6px;image-rendering:auto;margin:0 auto}',
+    '.bar__wechat-popover-label{font-size:.78rem;color:#6b7280;margin:.55rem 0 0}',
+    '.bar__wechat-close{position:absolute;top:.3rem;right:.4rem;background:none;border:none;font-size:1.05rem;line-height:1;color:#9ca3af;cursor:pointer;padding:.15rem .35rem;border-radius:4px}',
+    '.bar__wechat-close:hover{background:#f3f4f6;color:#374151}',
+    /* hide the standalone label in bar mode — bar icons are self-explanatory.
+       During recording / sending / sent flash, the label appears as a chip
+       above the bar. */
+    '.wrap.has-bar{position:relative}',
+    '.wrap.has-bar .label{display:none}',
+    '.wrap.has-bar.show-status .label{display:inline-block;position:absolute;bottom:calc(100% + .55rem);left:50%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#222;border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:.78rem;padding:.28rem .65rem;border-radius:999px;min-width:0}',
     /* post-submit success panel — same shell as the form, lets the visitor
        save the receipt URL even if they didn't copy it before submitting */
     '.success{display:none;flex-direction:column;gap:.65rem;width:300px;max-width:92vw;padding:1.25rem 1.1rem 1rem;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.08);box-sizing:border-box;position:relative;text-align:center}',
@@ -330,7 +409,167 @@
 
     btn.appendChild(iconWrap);
     wrap.appendChild(labelEl);
-    wrap.appendChild(btn);
+
+    // v0.1.9 floating-mode bar config — must be in scope before we use
+    // showBar in the conditional below.
+    var showBar = isFloating && options.showBar !== false;
+    var barLinks = {
+      twitter: pickLink(options.linkTwitter, DEFAULT_TWITTER_URL),
+      linkedin: pickLink(options.linkLinkedin, DEFAULT_LINKEDIN_URL),
+      github: pickLink(options.linkGithub, DEFAULT_GITHUB_URL),
+      gmicai: pickLink(options.linkGmicai, DEFAULT_GMICAI_URL),
+      email: pickLink(options.linkEmail, DEFAULT_TEAM_EMAIL),
+    };
+    var wechatQrUrl =
+      options.wechatQrUrl != null && options.wechatQrUrl !== ''
+        ? String(options.wechatQrUrl)
+        : backend + DEFAULT_WECHAT_QR_PATH;
+
+    var barEl = null;
+    var barMenuEl = null;
+    var barWechatPopover = null;
+    if (showBar) {
+      wrap.classList.add('has-bar');
+
+      barEl = document.createElement('div');
+      barEl.className = 'bar';
+
+      // 3 quick-link icons left of the mic
+      var quickTg = makeBarIconButton(BAR_TELEGRAM_SVG, 'Open Telegram');
+      var quickWa = makeBarIconButton(BAR_WHATSAPP_SVG, 'Open WhatsApp');
+      var quickWechat = makeBarIconButton(BAR_WECHAT_SVG, 'Show WeChat QR');
+
+      // ⋯ "more" menu trigger right of the mic
+      var moreBtn = makeBarIconButton(BAR_DOTS_SVG, 'More ways to reach us');
+
+      barEl.appendChild(quickTg);
+      barEl.appendChild(quickWa);
+      barEl.appendChild(quickWechat);
+      barEl.appendChild(btn);
+      barEl.appendChild(moreBtn);
+
+      // WeChat QR popover (above the bar)
+      barWechatPopover = document.createElement('div');
+      barWechatPopover.className = 'bar__wechat-popover';
+
+      var wechatCloseBtn = document.createElement('button');
+      wechatCloseBtn.type = 'button';
+      wechatCloseBtn.className = 'bar__wechat-close';
+      wechatCloseBtn.setAttribute('aria-label', labels.formClose);
+      wechatCloseBtn.textContent = '×';
+
+      var wechatImg = document.createElement('img');
+      wechatImg.alt = 'WeChat QR';
+      wechatImg.src = wechatQrUrl;
+      var wechatLabel = document.createElement('div');
+      wechatLabel.className = 'bar__wechat-popover-label';
+      wechatLabel.textContent = labels.barWechatLabel;
+      barWechatPopover.appendChild(wechatCloseBtn);
+      barWechatPopover.appendChild(wechatImg);
+      barWechatPopover.appendChild(wechatLabel);
+      barEl.appendChild(barWechatPopover);
+
+      wechatCloseBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        barEl.classList.remove('show-wechat');
+      });
+
+      // ⋯ menu — Connect section + email
+      barMenuEl = document.createElement('div');
+      barMenuEl.className = 'bar__menu';
+      barMenuEl.setAttribute('role', 'menu');
+
+      var connectHeader = document.createElement('div');
+      connectHeader.className = 'bar__section';
+      connectHeader.textContent = labels.barConnectSection;
+      barMenuEl.appendChild(connectHeader);
+
+      [
+        { url: barLinks.twitter, icon: X_SVG, label: 'X / Twitter', cls: 'bar__icon-x' },
+        { url: barLinks.linkedin, icon: LINKEDIN_SVG, label: 'LinkedIn' },
+        { url: barLinks.github, icon: GITHUB_SVG, label: 'GitHub' },
+        { url: barLinks.gmicai, icon: BUILDING_SVG, label: 'GMIC.ai' },
+        { url: barLinks.email ? 'mailto:' + barLinks.email : '', icon: MAIL_SVG, label: barLinks.email },
+      ].forEach(function (item) {
+        if (!item.url || !item.label) return;
+        var a = document.createElement('a');
+        a.className = 'bar__menu-item';
+        a.href = item.url;
+        a.setAttribute('role', 'menuitem');
+        if (!/^mailto:|^tel:/i.test(item.url)) {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+        var ico = document.createElement('span');
+        ico.className = 'bar__menu-item-icon' + (item.cls ? ' ' + item.cls : '');
+        ico.innerHTML = item.icon;
+        var txt = document.createElement('span');
+        txt.textContent = item.label;
+        a.appendChild(ico);
+        a.appendChild(txt);
+        barMenuEl.appendChild(a);
+      });
+
+      barEl.appendChild(barMenuEl);
+      wrap.appendChild(barEl);
+
+      // ── interactions ──
+      quickTg.addEventListener('click', function () {
+        try { window.open(buildTelegramUrl(), '_blank', 'noopener,noreferrer'); } catch (_) {}
+      });
+      quickWa.addEventListener('click', function () {
+        try { window.open(buildWhatsappUrl(), '_blank', 'noopener,noreferrer'); } catch (_) {}
+      });
+      quickWechat.addEventListener('click', function (e) {
+        e.stopPropagation();
+        barEl.classList.remove('show-menu');
+        barEl.classList.toggle('show-wechat');
+      });
+      moreBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        barEl.classList.remove('show-wechat');
+        barEl.classList.toggle('show-menu');
+      });
+      // close menu when a menu item is clicked (link opens in new tab anyway)
+      barMenuEl.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('.bar__menu-item')) {
+          barEl.classList.remove('show-menu');
+        }
+      });
+
+      // dismiss popovers on shadow-internal clicks outside the bar
+      shadow.addEventListener('click', function (e) {
+        if (!barEl.contains(e.target)) {
+          barEl.classList.remove('show-menu');
+          barEl.classList.remove('show-wechat');
+        }
+      });
+    } else {
+      wrap.appendChild(btn);
+    }
+
+    // Outside-click (host page) closes popovers. Events that originate inside
+    // the shadow root are retargeted to `root` from the document's view, so
+    // root.contains(e.target) is true for in-widget clicks. Also Esc anywhere.
+    var outsideClickHandler = null;
+    var escKeyHandler = null;
+    if (showBar) {
+      outsideClickHandler = function (e) {
+        if (!barEl) return;
+        if (!root.contains(e.target)) {
+          barEl.classList.remove('show-menu');
+          barEl.classList.remove('show-wechat');
+        }
+      };
+      escKeyHandler = function (e) {
+        if (e.key === 'Escape' && barEl) {
+          barEl.classList.remove('show-menu');
+          barEl.classList.remove('show-wechat');
+        }
+      };
+      document.addEventListener('click', outsideClickHandler);
+      document.addEventListener('keydown', escKeyHandler);
+    }
 
     var collectContact = options.collectContact !== false;
 
@@ -589,6 +828,15 @@
     var chunks = [];
     var pendingBlob = null;
 
+    function makeBarIconButton(svgMarkup, ariaLabel) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bar__icon';
+      b.setAttribute('aria-label', ariaLabel);
+      b.innerHTML = svgMarkup;
+      return b;
+    }
+
     function setChannelButtonsDisabled(disabled) {
       if (telegramBtn) telegramBtn.disabled = disabled;
       if (whatsappBtn) whatsappBtn.disabled = disabled;
@@ -624,6 +872,12 @@
         ringPulse.style.display = 'none';
         iconWrap.innerHTML = MIC_SVG;
         btn.setAttribute('aria-label', 'Start recording');
+      }
+      // In bar mode we hide the standalone label by default; surface it as
+      // a chip during active states so the visitor still gets feedback.
+      if (showBar) {
+        var showStatus = next === 'recording' || next === 'uploading' || next === 'sent' || next === 'error';
+        wrap.classList.toggle('show-status', showStatus);
       }
     }
 
@@ -901,6 +1155,10 @@
     btn.addEventListener('click', function () {
       stopWaves();
       hideSuccess();
+      if (barEl) {
+        barEl.classList.remove('show-menu');
+        barEl.classList.remove('show-wechat');
+      }
       if (status === 'recording') stopRecording();
       else if (status === 'idle' || status === 'sent' || status === 'error')
         startRecording();
@@ -980,6 +1238,8 @@
     return {
       destroy: function () {
         stopWaves();
+        if (outsideClickHandler) document.removeEventListener('click', outsideClickHandler);
+        if (escKeyHandler) document.removeEventListener('keydown', escKeyHandler);
         try {
           if (recorder && recorder.state !== 'inactive') recorder.stop();
         } catch (_) {}
@@ -996,6 +1256,16 @@
 
   function sanitizeHandle(s) {
     return String(s || '').trim().replace(/^@/, '').replace(/[^A-Za-z0-9_]/g, '');
+  }
+
+  // For the v0.1.9 floating-bar links: explicit '' / null / 'false' disables
+  // a single link without affecting the others. Otherwise fall back to the
+  // baked-in default.
+  function pickLink(override, fallback) {
+    if (override == null) return fallback;
+    var s = String(override).trim();
+    if (s === '' || s.toLowerCase() === 'false' || s.toLowerCase() === 'off') return '';
+    return s;
   }
 
   function sanitizeNumber(s) {
@@ -1092,6 +1362,13 @@
     var whatsappNumberAttr = script.getAttribute('data-whatsapp-number');
     var googleClientIdAttr = script.getAttribute('data-google-client-id');
     var receiptEnabledAttr = script.getAttribute('data-receipt-enabled');
+    var showBarAttr = script.getAttribute('data-show-bar');
+    var linkTwitterAttr = script.getAttribute('data-link-twitter');
+    var linkLinkedinAttr = script.getAttribute('data-link-linkedin');
+    var linkGithubAttr = script.getAttribute('data-link-github');
+    var linkGmicaiAttr = script.getAttribute('data-link-gmicai');
+    var linkEmailAttr = script.getAttribute('data-link-email');
+    var wechatQrUrlAttr = script.getAttribute('data-wechat-qr-url');
 
     var run = function () {
       try {
@@ -1107,6 +1384,13 @@
         if (whatsappNumberAttr != null) opts.whatsappNumber = whatsappNumberAttr;
         if (googleClientIdAttr != null) opts.googleClientId = googleClientIdAttr;
         if (receiptEnabledAttr === 'true') opts.receiptEnabled = true;
+        if (showBarAttr === 'false') opts.showBar = false;
+        if (linkTwitterAttr != null) opts.linkTwitter = linkTwitterAttr;
+        if (linkLinkedinAttr != null) opts.linkLinkedin = linkLinkedinAttr;
+        if (linkGithubAttr != null) opts.linkGithub = linkGithubAttr;
+        if (linkGmicaiAttr != null) opts.linkGmicai = linkGmicaiAttr;
+        if (linkEmailAttr != null) opts.linkEmail = linkEmailAttr;
+        if (wechatQrUrlAttr != null) opts.wechatQrUrl = wechatQrUrlAttr;
         if (floating) {
           opts.floating = true;
           mount(document.body, opts);
@@ -1124,6 +1408,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.8' };
+  window.VoiceToUs = { mount: mount, version: '0.1.9' };
   autoInit();
 })();

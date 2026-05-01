@@ -53,6 +53,12 @@ app.get('/widget.js', (_req, res) => {
   res.sendFile(path.join(widgetDir, 'voice-to-us.js'));
 });
 
+app.get('/wechat-qr.png', (_req, res) => {
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(widgetDir, 'wechat-qr.png'));
+});
+
 app.get('/widget-demo', (_req, res) => {
   res.sendFile(path.join(widgetDir, 'demo.html'));
 });
