@@ -54,12 +54,14 @@
   var DEFAULT_TELEGRAM_HANDLE = 'gmicai';
   var DEFAULT_WHATSAPP_NUMBER = '+16699000008';
   var DEFAULT_GOOGLE_CLIENT_ID = '934733898751-ov2n1oidtm6filhb1fomatnr5pb65p16.apps.googleusercontent.com';
-  /* v0.1.9 floating-bar links — overridable per embed via data-link-* attrs. */
+  /* v0.1.9 floating-bar links — overridable per embed via data-link-* attrs.
+     GitHub is hidden by default (empty); embeds that want it visible can
+     set data-link-github="https://github.com/your-org". */
   var DEFAULT_TWITTER_URL = 'https://x.com/GMICAIINC';
   var DEFAULT_LINKEDIN_URL = 'https://www.linkedin.com/company/gmicaiinc/';
-  var DEFAULT_GITHUB_URL = 'https://github.com/xtrigg';
+  var DEFAULT_GITHUB_URL = '';
   var DEFAULT_GMICAI_URL = 'https://gmic.ai/';
-  var DEFAULT_TEAM_EMAIL = 't@xtrigg.com';
+  var DEFAULT_TEAM_EMAIL = 'Trigg@gmic.ai';
   /* QR served from the same backend that serves widget.js — see server.js. */
   var DEFAULT_WECHAT_QR_PATH = '/wechat-qr.png';
 
@@ -1408,6 +1410,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.9' };
+  window.VoiceToUs = { mount: mount, version: '0.1.10' };
   autoInit();
 })();
