@@ -54,14 +54,15 @@
   var DEFAULT_TELEGRAM_HANDLE = 'gmicai';
   var DEFAULT_WHATSAPP_NUMBER = '+16699000008';
   var DEFAULT_GOOGLE_CLIENT_ID = '934733898751-ov2n1oidtm6filhb1fomatnr5pb65p16.apps.googleusercontent.com';
-  /* v0.1.9 floating-bar links — overridable per embed via data-link-* attrs.
+  /* Floating-bar links — overridable per embed via data-link-* attrs.
      GitHub is hidden by default (empty); embeds that want it visible can
      set data-link-github="https://github.com/your-org". */
   var DEFAULT_TWITTER_URL = 'https://x.com/GMICAIINC';
   var DEFAULT_LINKEDIN_URL = 'https://www.linkedin.com/company/gmicaiinc/';
+  var DEFAULT_SLACK_URL = 'mailto:trigg@gmic.ai?subject=Slack%20Connect%20request';
   var DEFAULT_GITHUB_URL = '';
   var DEFAULT_GMICAI_URL = 'https://gmic.ai/';
-  var DEFAULT_TEAM_EMAIL = 'Trigg@gmic.ai';
+  var DEFAULT_TEAM_EMAIL = 'trigg@gmic.ai';
   /* QR served from the same backend that serves widget.js — see server.js. */
   var DEFAULT_WECHAT_QR_PATH = '/wechat-qr.png';
 
@@ -109,6 +110,10 @@
   var LINKEDIN_SVG =
     '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
     '<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path>' +
+    '</svg>';
+  var SLACK_SVG =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.522-2.52 2.527 2.527 0 0 1 2.523 2.52v6.313A2.528 2.528 0 0 1 8.835 24a2.528 2.528 0 0 1-2.522-2.522v-6.313zM8.835 5.042a2.528 2.528 0 0 1-2.522-2.52A2.528 2.528 0 0 1 8.835 0a2.528 2.528 0 0 1 2.523 2.522v2.52H8.835zm0 1.271a2.527 2.527 0 0 1 2.523 2.522 2.527 2.527 0 0 1-2.523 2.523H2.522A2.528 2.528 0 0 1 0 8.835a2.528 2.528 0 0 1 2.522-2.522h6.313zm10.123 2.522a2.528 2.528 0 0 1 2.52-2.522A2.528 2.528 0 0 1 24 8.835a2.528 2.528 0 0 1-2.522 2.523h-2.52V8.835zm-1.271 0a2.528 2.528 0 0 1-2.522 2.523 2.528 2.528 0 0 1-2.523-2.523V2.522A2.528 2.528 0 0 1 15.165 0a2.528 2.528 0 0 1 2.522 2.522v6.313zm-2.522 10.123a2.528 2.528 0 0 1 2.522 2.52A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.523-2.522v-2.52h2.523zm0-1.271a2.527 2.527 0 0 1-2.523-2.522 2.527 2.527 0 0 1 2.523-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.522h-6.313z"></path>' +
     '</svg>';
   var GITHUB_SVG =
     '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
@@ -418,6 +423,7 @@
     var barLinks = {
       twitter: pickLink(options.linkTwitter, DEFAULT_TWITTER_URL),
       linkedin: pickLink(options.linkLinkedin, DEFAULT_LINKEDIN_URL),
+      slack: pickLink(options.linkSlack, DEFAULT_SLACK_URL),
       github: pickLink(options.linkGithub, DEFAULT_GITHUB_URL),
       gmicai: pickLink(options.linkGmicai, DEFAULT_GMICAI_URL),
       email: pickLink(options.linkEmail, DEFAULT_TEAM_EMAIL),
@@ -489,6 +495,7 @@
       [
         { url: barLinks.twitter, icon: X_SVG, label: 'X / Twitter', cls: 'bar__icon-x' },
         { url: barLinks.linkedin, icon: LINKEDIN_SVG, label: 'LinkedIn' },
+        { url: barLinks.slack, icon: SLACK_SVG, label: 'Slack' },
         { url: barLinks.github, icon: GITHUB_SVG, label: 'GitHub' },
         { url: barLinks.gmicai, icon: BUILDING_SVG, label: 'GMIC.ai' },
         { url: barLinks.email ? 'mailto:' + barLinks.email : '', icon: MAIL_SVG, label: barLinks.email },
@@ -1367,6 +1374,7 @@
     var showBarAttr = script.getAttribute('data-show-bar');
     var linkTwitterAttr = script.getAttribute('data-link-twitter');
     var linkLinkedinAttr = script.getAttribute('data-link-linkedin');
+    var linkSlackAttr = script.getAttribute('data-link-slack');
     var linkGithubAttr = script.getAttribute('data-link-github');
     var linkGmicaiAttr = script.getAttribute('data-link-gmicai');
     var linkEmailAttr = script.getAttribute('data-link-email');
@@ -1389,6 +1397,7 @@
         if (showBarAttr === 'false') opts.showBar = false;
         if (linkTwitterAttr != null) opts.linkTwitter = linkTwitterAttr;
         if (linkLinkedinAttr != null) opts.linkLinkedin = linkLinkedinAttr;
+        if (linkSlackAttr != null) opts.linkSlack = linkSlackAttr;
         if (linkGithubAttr != null) opts.linkGithub = linkGithubAttr;
         if (linkGmicaiAttr != null) opts.linkGmicai = linkGmicaiAttr;
         if (linkEmailAttr != null) opts.linkEmail = linkEmailAttr;
@@ -1410,6 +1419,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.10' };
+  window.VoiceToUs = { mount: mount, version: '0.1.11' };
   autoInit();
 })();
