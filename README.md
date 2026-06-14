@@ -16,13 +16,13 @@ A drop-in voice-note widget. Visitors press a mic on any embedded page, speak, s
 - **`frontend/`** — small Next.js app used as a local development page (the prod-grade demo lives at `/widget-demo` on the backend).
 - **`prototype/`** — design references the widget UI was built against.
 
-## What's in the box (current: v0.1.9)
+## What's in the box (current: v0.1.11)
 
 - ✅ **One-click voice recording** with Shadow-DOM isolation (no host CSS leaks)
 - ✅ **Multi-channel reply form** after recording: Telegram, WhatsApp, Google sign-in, manual email — visitor picks any one
 - ✅ **Verified Google sign-in** (audience-checked server-side via Google `tokeninfo`)
 - ✅ **Whisper AI transcript** automatically attached to the Telegram caption
-- ✅ **Floating bottom bar** with quick links to Telegram / WhatsApp / WeChat QR + a "Connect" menu (X / LinkedIn / GitHub / GMIC.ai / mailto)
+- ✅ **Floating bottom bar** with quick links to Telegram / WhatsApp / WeChat QR + a "Connect" menu (X / LinkedIn / Slack / GitHub / GMIC.ai / mailto)
 - ✅ **Multi-recipient fan-out** to N Telegram bots in parallel
 - ✅ **Localhost guard** so dev tests don't page real recipients (with a `/widget-demo` exemption)
 - ✅ **Receipt link + admin reply page** (opt-in, generates `gmic.ai/voice2us/r/<slug>` URLs the visitor can revisit)
@@ -154,13 +154,13 @@ Captions are HTML-escaped server-side and truncated to fit Telegram's 1024-char 
 
 The widget is published via jsDelivr from this repo's tagged releases. Any site can embed it with a single `<script>` tag — no static hosting needed for the JS. Shadow DOM keeps host styles isolated.
 
-**Pin to a specific tag** (latest is `v0.1.9`):
+**Pin to a specific tag** (latest is `v0.1.11`):
 
 ```
-https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.9/widget/voice-to-us.js
+https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.11/widget/voice-to-us.js
 ```
 
-> Always pin a tag (`@v0.1.9`), never `@main` / `@latest` — jsDelivr caches branches up to 7 days. To roll forward, bump the tag (see [Releasing](#releasing-a-new-widget-version)).
+> Always pin a tag (`@v0.1.11`), never `@main` / `@latest` — jsDelivr caches branches up to 7 days. To roll forward, bump the tag (see [Releasing](#releasing-a-new-widget-version)).
 
 Your backend must be on a public HTTPS URL to receive the audio. The same backend serves `widget/voice-to-us.js` at `GET /widget.js` — useful in dev (no need to commit-and-tag for every change).
 
@@ -174,7 +174,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.9/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.11/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   async
@@ -186,7 +186,7 @@ FRONTEND_ORIGIN=https://site-a.com,https://site-b.com
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.9/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.11/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-floating="true"
   data-placement="bottom-center"
@@ -200,7 +200,7 @@ In floating mode the widget renders as a horizontal bar:
 [Telegram] [WhatsApp] [WeChat]  🎤  [⋯]
 ```
 
-Quick-link icons (Telegram, WhatsApp, WeChat) bypass the recording flow — they open the chat directly. The mic still works as before. The `⋯` button opens a "Connect" dropdown with X / LinkedIn / GitHub / GMIC.ai / mailto.
+Quick-link icons (Telegram, WhatsApp, WeChat) bypass the recording flow — they open the chat directly. The mic still works as before. The `⋯` button opens a "Connect" dropdown with X / LinkedIn / Slack / GitHub / GMIC.ai / mailto.
 
 To opt out and keep the simple floating mic, add `data-show-bar="false"`.
 
@@ -209,7 +209,7 @@ To opt out and keep the simple floating mic, add `data-show-bar="false"`.
 ### Option C — programmatic (for SPAs)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.9/widget/voice-to-us.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.11/widget/voice-to-us.js"></script>
 <div id="voice-btn"></div>
 <script>
   const instance = VoiceToUs.mount('#voice-btn', {
@@ -276,9 +276,10 @@ Every visible string and look knob is configurable. Below: data attributes on th
 | `showBar` | `data-show-bar="false"` (to disable) | `true` in floating mode |
 | `linkTwitter` | `data-link-twitter` | `https://x.com/GMICAIINC` |
 | `linkLinkedin` | `data-link-linkedin` | `https://www.linkedin.com/company/gmicaiinc/` |
-| `linkGithub` | `data-link-github` | `https://github.com/xtrigg` |
+| `linkSlack` | `data-link-slack` | `mailto:trigg@gmic.ai?subject=Slack%20Connect%20request` |
+| `linkGithub` | `data-link-github` | empty, hidden by default |
 | `linkGmicai` | `data-link-gmicai` | `https://gmic.ai/` |
-| `linkEmail` | `data-link-email` | `t@xtrigg.com` |
+| `linkEmail` | `data-link-email` | `trigg@gmic.ai` |
 | `wechatQrUrl` | `data-wechat-qr-url` | `<backend>/wechat-qr.png` |
 | `labels.barWechatLabel` | (n/a — set via `labels` option) | `Scan to add me on WeChat · 扫一扫加微信` |
 | `labels.barConnectSection` | (n/a — set via `labels` option) | `Connect` |
@@ -288,10 +289,22 @@ To drop a single bar link without losing the rest, set the attr to `false` or `o
 ```html
 <script
   src="..."
+  data-link-slack="off"
   data-link-github="off"
   data-link-email="custom@yourcompany.com"
 ></script>
 ```
+
+To send visitors straight to a Slack workspace invite or Slack Connect landing page, override the default:
+
+```html
+<script
+  src="..."
+  data-link-slack="https://your-slack-invite-or-connect-url"
+></script>
+```
+
+The baked-in default opens a Slack Connect request email to `trigg@gmic.ai`, which avoids publishing a long-lived public workspace invite link.
 
 ### Attention animation
 
@@ -308,7 +321,7 @@ To drop a single bar link without losing the rest, set the attr to `false` or `o
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.9/widget/voice-to-us.js"
+  src="https://cdn.jsdelivr.net/gh/gmic-ai-inc/voice-to-us@v0.1.11/widget/voice-to-us.js"
   data-backend="https://gmic.ai/voice2us"
   data-mount="#voice-btn"
   data-color="#1976d2"
@@ -360,6 +373,8 @@ For the production backend, also: `git pull && pm2 restart voice-to-us --update-
 
 ## Version history (widget)
 
+- **v0.1.11** — Adds configurable Slack entry to the floating Connect menu (`data-link-slack`), defaulting to a Slack Connect request email
+- **v0.1.10** — Company-friendly defaults for the Connect menu
 - **v0.1.9** — Floating bottom bar with quick-link icons (Telegram / WhatsApp / WeChat QR) and Connect dropdown (X / LinkedIn / GitHub / GMIC.ai / mailto)
 - **v0.1.8** — Default Telegram handle changed to `@gmicai`
 - **v0.1.7** — Friendlier success copy ("Got it! We'll get back to you soon.")
