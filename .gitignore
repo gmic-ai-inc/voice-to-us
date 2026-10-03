@@ -16,3 +16,6 @@ node_modules/
 
 # server-side receipt records (one JSON per voice-note submission)
 backend/submissions/
+
+# parked / undelivered voice notes (audio + metadata) — personal data, never commit
+backend/inbox/

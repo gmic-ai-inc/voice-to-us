@@ -49,6 +49,9 @@
     formInvalidEmail: 'That email looks off',
     formFooter: 'Only used to reply to this message · No account · No ads',
     whatsappPrefilledText: 'Hi! I just left a voice note on your site — looking forward to your reply.',
+    // The bar's quick WhatsApp icon opens chat without recording anything, so
+    // it must not claim a voice note was left.
+    whatsappQuickText: 'Hi! I found you on your website and have a question.',
   };
 
   var DEFAULT_TELEGRAM_HANDLE = 'gmicai';
@@ -520,7 +523,7 @@
         try { window.open(buildTelegramUrl(), '_blank', 'noopener,noreferrer'); } catch (_) {}
       });
       quickWa.addEventListener('click', function () {
-        try { window.open(buildWhatsappUrl(), '_blank', 'noopener,noreferrer'); } catch (_) {}
+        try { window.open(buildWhatsappUrl(labels.whatsappQuickText), '_blank', 'noopener,noreferrer'); } catch (_) {}
       });
       quickWechat.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -829,6 +832,9 @@
     var stream = null;
     var chunks = [];
     var pendingBlob = null;
+    // Promise<string|null>: server id of the recording uploaded as soon as it
+    // stopped (see parkUpload), or null if that upload failed.
+    var parkedId = null;
 
     function makeBarIconButton(svgMarkup, ariaLabel) {
       var b = document.createElement('button');
@@ -993,15 +999,14 @@
       return 'https://t.me/' + encodeURIComponent(telegramHandle);
     }
 
-    function buildWhatsappUrl() {
+    function buildWhatsappUrl(text) {
       var num = whatsappNumber.replace(/^\+/, '');
-      var text = labels.whatsappPrefilledText || '';
+      if (text == null) text = labels.whatsappPrefilledText || '';
       var qs = text ? '?text=' + encodeURIComponent(text) : '';
       return 'https://wa.me/' + num + qs;
     }
 
-    function upload(blob, payload) {
-      setStatus('uploading');
+    function audioForm(blob) {
       var form = new FormData();
       var ext = blob.type.indexOf('webm') >= 0
         ? 'webm'
@@ -1015,6 +1020,48 @@
         form.append('pageTitle', (document.title || '').slice(0, 300));
         form.append('pageUrl', (location.href || '').slice(0, 800));
       } catch (_) { /* sandboxed iframe: ignore */ }
+      return form;
+    }
+
+    // Upload the recording the moment it stops, before the visitor picks a
+    // reply channel. Picking WhatsApp/Telegram opens another app, and on phones
+    // that suspends this page — an upload started at that point often never
+    // left the device. The server parks the note and delivers it on finalize,
+    // or on its own after two minutes if no choice arrives.
+    function parkUpload(blob) {
+      var form = audioForm(blob);
+      form.append('deferred', '1');
+      return fetch(backend + '/api/upload', { method: 'POST', body: form })
+        .then(function (resp) { return resp.ok ? resp.json() : null; })
+        .then(function (data) { return (data && data.id) || null; })
+        .catch(function () { return null; });
+    }
+
+    // Small form POST that survives the page being backgrounded or closed.
+    function beacon(path, fields) {
+      var params = new URLSearchParams();
+      for (var k in fields) {
+        if (fields.hasOwnProperty(k) && fields[k] != null) params.append(k, String(fields[k]));
+      }
+      var url = backend + path;
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon(url, params)) return;
+      } catch (_) { /* fall through */ }
+      try { fetch(url, { method: 'POST', body: params, keepalive: true }).catch(function () {}); } catch (_) {}
+    }
+
+    function finalizePayload(payload) {
+      var out = {};
+      if (payload.channel) out.channel = payload.channel.slice(0, 30);
+      if (payload.email) out.email = payload.email.slice(0, 200);
+      if (payload.googleAccessToken) out.googleAccessToken = payload.googleAccessToken;
+      if (payload.slug) out.slug = payload.slug.slice(0, 64);
+      return out;
+    }
+
+    function upload(blob, payload) {
+      setStatus('uploading');
+      var form = audioForm(blob);
       if (payload) {
         if (payload.channel) form.append('channel', payload.channel.slice(0, 30));
         if (payload.email) form.append('email', payload.email.slice(0, 200));
@@ -1051,10 +1098,12 @@
       var blob = pendingBlob;
       if (!blob) return;
       pendingBlob = null;
+      var parked = parkedId;
+      parkedId = null;
       hideContactForm();
       if (deepLinkUrl) {
         // Open synchronously inside the click handler so popup blockers
-        // don't kill it. Fire-and-forget the upload in parallel.
+        // don't kill it. The audio is normally already on the server.
         try { window.open(deepLinkUrl, '_blank', 'noopener,noreferrer'); } catch (_) {}
       }
       var payload = { channel: channel };
@@ -1064,7 +1113,22 @@
           if (extraPayload.hasOwnProperty(k)) payload[k] = extraPayload[k];
         }
       }
-      upload(blob, payload);
+      if (!parked) {
+        upload(blob, payload);
+        return;
+      }
+      setStatus('uploading');
+      parked.then(function (id) {
+        if (!id) {
+          upload(blob, payload); // early upload failed: send it the classic way
+          return;
+        }
+        var f = finalizePayload(payload);
+        f.id = id;
+        beacon('/api/finalize', f);
+        if (collectContact && receiptEnabled) showSuccess();
+        else flashThenIdle('sent', null, 3500);
+      });
     }
 
     function triggerGoogleSignIn() {
@@ -1129,6 +1193,7 @@
             cleanupStream();
             if (collectContact) {
               pendingBlob = blob;
+              parkedId = parkUpload(blob);
               showContactForm();
             } else {
               upload(blob, null);
@@ -1171,6 +1236,11 @@
 
       function discardAndIdle() {
         pendingBlob = null;
+        if (parkedId) {
+          // Explicit cancel: the visitor does not want this note sent.
+          parkedId.then(function (id) { if (id) beacon('/api/discard', { id: id }); });
+          parkedId = null;
+        }
         hideContactForm();
         setStatus('idle');
       }
@@ -1223,10 +1293,7 @@
           emailInput.focus();
           return;
         }
-        var blob = pendingBlob;
-        pendingBlob = null;
-        hideContactForm();
-        upload(blob, { channel: 'email', email: email });
+        submitFlow('email', null, { email: email });
       });
 
       formEl.addEventListener('keydown', function (e) {
@@ -1338,6 +1405,7 @@
       formInvalidEmail: 'data-label-form-invalid-email',
       formFooter: 'data-label-form-footer',
       whatsappPrefilledText: 'data-label-whatsapp-prefilled',
+      whatsappQuickText: 'data-label-whatsapp-quick',
     };
     for (var key in map) {
       var v = script.getAttribute(map[key]);
@@ -1410,6 +1478,6 @@
     }
   }
 
-  window.VoiceToUs = { mount: mount, version: '0.1.10' };
+  window.VoiceToUs = { mount: mount, version: '0.1.11' };
   autoInit();
 })();

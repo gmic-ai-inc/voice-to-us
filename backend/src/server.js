@@ -4,8 +4,10 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { sendVoiceToAllTargets, getTargets } from './telegram.js';
+import { sendVoiceToAllTargets, getTargets, checkTargets } from './telegram.js';
 import { verifyGoogleAccessToken } from './google-auth.js';
+import * as inbox from './inbox.js';
+import { alert } from './alert.js';
 import {
   saveSubmission,
   loadSubmission,
@@ -63,87 +65,197 @@ app.get('/widget-demo', (_req, res) => {
   res.sendFile(path.join(widgetDir, 'demo.html'));
 });
 
+// --- Delivery -------------------------------------------------------------
+// Every note is parked on disk first (inbox.js) and removed only once Telegram
+// accepted it. Two upload modes:
+//   classic  — POST /api/upload with the channel fields: park + deliver now.
+//   deferred — POST /api/upload with deferred=1 right after recording stops,
+//              then a tiny POST /api/finalize (sendBeacon) once the visitor
+//              picks a reply channel. Opening WhatsApp/Telegram backgrounds the
+//              page on phones and used to kill the upload; the audio is now
+//              already on the server by then. No finalize within PARK_MS →
+//              delivered anyway; an explicit Cancel → /api/discard.
+const PARK_MS = Number(process.env.PARK_TIMEOUT_MS ?? 120_000);
+const parkedTimers = new Map(); // id -> timeout handle
+
+function pickFields(body) {
+  const b = body ?? {};
+  return {
+    channel: b.channel,
+    email: b.email,
+    phone: b.phone,
+    slug: b.slug,
+    googleAccessToken: b.googleAccessToken,
+  };
+}
+
+async function deliver(id, fields, baseUrl) {
+  const timer = parkedTimers.get(id);
+  if (timer) clearTimeout(timer);
+  parkedTimers.delete(id);
+
+  const note = await inbox.load(id);
+  const meta = note.meta ?? {};
+
+  // Verify Google sign-in server-side; a failed check costs the email, never
+  // the recording.
+  let email = fields.email;
+  let googleName = null;
+  if (fields.googleAccessToken) {
+    try {
+      const g = await verifyGoogleAccessToken(fields.googleAccessToken);
+      email = g.email;
+      googleName = g.name || null;
+    } catch (err) {
+      console.warn('[google-auth] verification failed:', err?.message ?? err);
+      email = null;
+    }
+  }
+
+  const slug = fields.slug;
+  const hasSlug = slug && isValidSlug(slug);
+  const adminToken = hasSlug ? generateAdminToken() : null;
+  const adminUrl = hasSlug ? `${baseUrl}/r/${slug}/admin/${adminToken}` : null;
+  const channel = fields.channel || 'not chosen (visitor left before picking)';
+
+  let result;
+  try {
+    result = await sendVoiceToAllTargets({
+      buffer: note.buffer,
+      mimeType: note.mimeType,
+      context: {
+        pageTitle: meta.pageTitle,
+        pageUrl: meta.pageUrl,
+        email,
+        phone: fields.phone,
+        channel,
+        googleName,
+        adminUrl,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await inbox.markFailed(id, message).catch(() => {});
+    await alert(
+      `🛑 **网页语音留言未能推送到 Telegram**\n` +
+        `> 来源页面: ${meta.pageUrl || '-'}\n> 回复渠道: ${channel}${email ? `\n> 邮箱: ${email}` : ''}\n` +
+        `> 错误: ${message.slice(0, 300)}\n` +
+        `录音已保存在服务器 \`inbox/${id}.audio\`,修好 Telegram 后可补发。`,
+    );
+    throw err;
+  }
+
+  if (hasSlug) {
+    try {
+      await saveSubmission(slug, {
+        slug,
+        adminToken,
+        createdAt: new Date().toISOString(),
+        pageTitle: meta.pageTitle ?? null,
+        pageUrl: meta.pageUrl ?? null,
+        channel: fields.channel ?? null,
+        email: email ?? null,
+        phone: fields.phone ?? null,
+        googleName,
+        status: 'received',
+        delivered: result.sent.length,
+        failed: result.failed.length,
+        reply: null,
+        repliedAt: null,
+      });
+    } catch (err) {
+      console.warn('[storage] saveSubmission failed:', err?.message ?? err);
+    }
+  }
+  if (result.failed.length > 0) {
+    await alert(
+      `⚠️ **网页语音留言部分接收人推送失败**\n` +
+        result.failed.map((f) => `> ${f.label} (${f.chatId}): ${f.error}`).join('\n'),
+      { dedupeKey: 'partial-failure', minIntervalMs: 6 * 3600_000 },
+    );
+  }
+  await inbox.remove(id);
+  return result;
+}
+
+function deliverInBackground(id, fields, baseUrl) {
+  deliver(id, fields, baseUrl).catch((err) =>
+    console.error(`[deliver] ${id} failed:`, err?.message ?? err),
+  );
+}
+
 app.post('/api/upload', upload.single('audio'), async (req, res) => {
   if (!req.file) {
     res.status(400).json({ error: 'Missing "audio" file field' });
     return;
   }
 
-  // If the visitor signed in with Google, verify the access token server-side
-  // (audience check + email lookup) and override the email field with the
-  // verified value — we don't trust client-supplied emails when Google
-  // attests to one.
-  let email = req.body?.email;
-  let googleName = null;
-  if (req.body?.googleAccessToken) {
-    try {
-      const g = await verifyGoogleAccessToken(req.body.googleAccessToken);
-      email = g.email;
-      googleName = g.name || null;
-    } catch (err) {
-      console.warn('[google-auth] verification failed:', err?.message ?? err);
-      res.status(400).json({ error: 'Google sign-in verification failed' });
-      return;
-    }
+  const id = inbox.newId();
+  try {
+    await inbox.park(id, req.file.buffer, req.file.mimetype, {
+      pageTitle: req.body?.pageTitle,
+      pageUrl: req.body?.pageUrl,
+    });
+  } catch (err) {
+    console.error('[inbox] park failed:', err);
+    res.status(500).json({ error: 'Could not store the recording' });
+    return;
   }
 
-  const slug = req.body?.slug;
-  const hasSlug = slug && isValidSlug(slug);
-  const adminToken = hasSlug ? generateAdminToken() : null;
-  const adminUrl = hasSlug
-    ? `${publicBaseUrl(req)}/r/${slug}/admin/${adminToken}`
-    : null;
+  const baseUrl = publicBaseUrl(req);
+  if (req.body?.deferred === '1') {
+    parkedTimers.set(id, setTimeout(() => deliverInBackground(id, {}, baseUrl), PARK_MS));
+    res.json({ ok: true, id });
+    return;
+  }
 
+  const fields = pickFields(req.body);
   try {
-    const result = await sendVoiceToAllTargets({
-      buffer: req.file.buffer,
-      mimeType: req.file.mimetype,
-      context: {
-        pageTitle: req.body?.pageTitle,
-        pageUrl: req.body?.pageUrl,
-        email: email,
-        phone: req.body?.phone,
-        channel: req.body?.channel,
-        googleName: googleName,
-        adminUrl: adminUrl,
-      },
-    });
-
-    // Persist a receipt record so the visitor can revisit /r/<slug> later.
-    if (hasSlug) {
-      try {
-        await saveSubmission(slug, {
-          slug,
-          adminToken,
-          createdAt: new Date().toISOString(),
-          pageTitle: req.body?.pageTitle ?? null,
-          pageUrl: req.body?.pageUrl ?? null,
-          channel: req.body?.channel ?? null,
-          email: email ?? null,
-          phone: req.body?.phone ?? null,
-          googleName: googleName,
-          status: 'received',
-          delivered: result.sent.length,
-          failed: result.failed.length,
-          reply: null,
-          repliedAt: null,
-        });
-      } catch (err) {
-        console.warn('[storage] saveSubmission failed:', err?.message ?? err);
-      }
-    }
-
+    const result = await deliver(id, fields, baseUrl);
     res.json({
       ok: true,
       delivered: result.sent.length,
       failed: result.failed.length,
-      slug: slug && isValidSlug(slug) ? slug : null,
+      slug: fields.slug && isValidSlug(fields.slug) ? fields.slug : null,
     });
   } catch (err) {
     console.error('[upload] failed:', err);
-    const message = err instanceof Error ? err.message : 'Send failed';
-    res.status(500).json({ error: message });
+    // The note is safe on disk and an alert went out; tell the visitor it was
+    // received rather than asking them to record again.
+    res.json({ ok: true, delivered: 0, failed: 1, queued: true, slug: null });
   }
+});
+
+// Visitor picked a reply channel for a parked note (sent with sendBeacon, so
+// the response is usually never read).
+app.post('/api/finalize', async (req, res) => {
+  const id = req.body?.id;
+  if (!inbox.isValidId(id)) {
+    res.status(400).json({ error: 'Invalid id' });
+    return;
+  }
+  if (!parkedTimers.has(id)) {
+    // Already delivered by the timeout (or unknown) — nothing left to do.
+    res.json({ ok: true, late: true });
+    return;
+  }
+  try {
+    const result = await deliver(id, pickFields(req.body), publicBaseUrl(req));
+    res.json({ ok: true, delivered: result.sent.length, failed: result.failed.length });
+  } catch {
+    res.json({ ok: true, delivered: 0, queued: true });
+  }
+});
+
+// Visitor explicitly cancelled the parked note.
+app.post('/api/discard', async (req, res) => {
+  const id = req.body?.id;
+  if (inbox.isValidId(id) && parkedTimers.has(id)) {
+    clearTimeout(parkedTimers.get(id));
+    parkedTimers.delete(id);
+    await inbox.remove(id).catch(() => {});
+  }
+  res.json({ ok: true });
 });
 
 app.get('/r/:slug', async (req, res) => {
@@ -295,8 +407,22 @@ function renderAdminPage(record, slug, token, flash, errorMsg, baseUrl) {
   return renderShellHtml('Reply · ' + slug, main, baseUrl);
 }
 
+// Recipient health. A blocked bot or a never-started chat once went unnoticed
+// for over a month; check every 6 h and alert (at most once a day per issue).
+const HEALTH_EVERY_MS = 6 * 3600_000;
+async function healthCheck() {
+  const problems = await checkTargets();
+  if (problems.length === 0) return;
+  await alert(
+    `🛑 **网页语音留言:Telegram 接收人不可达**\n` +
+      problems.map((p) => `> ${p.label} (${p.chatId}): ${p.error}`).join('\n') +
+      `\n新的语音留言会存在服务器上,但不会推送到你手里。请在 Telegram 里打开机器人发送 /start。`,
+    { dedupeKey: 'health:' + problems.map((p) => p.chatId).join(','), minIntervalMs: 24 * 3600_000 },
+  );
+}
+
 const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => {
+app.listen(port, async () => {
   const targets = getTargets();
   console.log(`voice-to-us backend listening on http://localhost:${port}`);
   if (targets.length === 0) {
@@ -306,4 +432,14 @@ app.listen(port, () => {
       `Telegram fan-out: ${targets.length} target(s) — ${targets.map((t) => `${t.label}:${t.chatId}`).join(', ')}`,
     );
   }
+
+  // Notes parked before a restart lost their timers — deliver them now.
+  const leftover = await inbox.listParked();
+  if (leftover.length) console.log(`[inbox] delivering ${leftover.length} note(s) parked before restart`);
+  for (const id of leftover) {
+    deliverInBackground(id, {}, process.env.PUBLIC_BASE_URL || '');
+  }
+
+  healthCheck();
+  setInterval(healthCheck, HEALTH_EVERY_MS).unref();
 });

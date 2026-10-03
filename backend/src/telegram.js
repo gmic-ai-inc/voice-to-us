@@ -104,6 +104,28 @@ export async function sendVoiceToAllTargets({ buffer, mimeType, context = {} }) 
   return { sent, failed };
 }
 
+// Can each recipient still receive messages? sendChatAction shows a brief
+// "typing…" and nothing else, so it is safe to call on a schedule. Returns the
+// targets that failed (403 = bot blocked, 400 = chat never started / gone).
+export async function checkTargets() {
+  const problems = [];
+  for (const t of getTargets()) {
+    try {
+      const resp = await fetch(`https://api.telegram.org/bot${t.token}/sendChatAction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: t.chatId, action: 'typing' }),
+      });
+      const data = await resp.json();
+      if (!data.ok) problems.push({ label: t.label, chatId: t.chatId, error: data.description ?? 'unknown' });
+    } catch (err) {
+      // Network blip, not a recipient problem — don't page anyone for it.
+      console.warn('[health] Telegram check skipped:', err?.message ?? err);
+    }
+  }
+  return problems;
+}
+
 async function sendOggToOne(oggBuffer, { token, chatId }, caption) {
   const form = new FormData();
   form.append('chat_id', String(chatId));
