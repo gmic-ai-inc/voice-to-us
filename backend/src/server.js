@@ -135,12 +135,17 @@ async function deliver(id, fields, baseUrl) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const badAudio = err?.kind === 'audio';
     await inbox.markFailed(id, message).catch(() => {});
     await alert(
-      `🛑 **网页语音留言未能推送到 Telegram**\n` +
+      (badAudio
+        ? `⚠️ **网页语音留言:录音文件无法解码**(可能已损坏或格式不支持)\n`
+        : `🛑 **网页语音留言未能推送到 Telegram**\n`) +
         `> 来源页面: ${meta.pageUrl || '-'}\n> 回复渠道: ${channel}${email ? `\n> 邮箱: ${email}` : ''}\n` +
-        `> 错误: ${message.slice(0, 300)}\n` +
-        `录音已保存在服务器 \`inbox/${id}.audio\`,修好 Telegram 后可补发。`,
+        `> 原因: ${message.slice(0, 300)}\n` +
+        (badAudio
+          ? `原始文件保存在服务器 \`inbox/${id}.audio\`,可下载人工试听。`
+          : `录音已保存在服务器 \`inbox/${id}.audio\`,修好 Telegram 后可补发。`),
     );
     throw err;
   }

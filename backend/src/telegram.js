@@ -274,7 +274,13 @@ function runFfmpeg(args) {
     proc.on('error', reject);
     proc.on('close', (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited ${code}: ${stderr.trim().slice(-500)}`));
+      else {
+        // ffmpeg prints its build banner first; the actual reason is at the end.
+        const reason = stderr.trim().split('\n').map((l) => l.trim()).filter(Boolean).slice(-2).join(' / ');
+        const err = new Error(`ffmpeg exited ${code}: ${reason.slice(0, 300)}`);
+        err.kind = 'audio'; // the recording could not be decoded — not a Telegram problem
+        reject(err);
+      }
     });
   });
 }
